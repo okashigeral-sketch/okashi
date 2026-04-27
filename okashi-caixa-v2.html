@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Okashi — Caixa</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #1a0a2e; color: #fff; height: 100vh; overflow: hidden; }
+
+/* HEADER */
+header {
+  background: linear-gradient(135deg, #c2006e, #8b00a8);
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 52px;
+}
+header h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+#pedido-label { font-size: 13px; opacity: 0.85; }
+
+/* LAYOUT */
+.layout { display: flex; height: calc(100vh - 52px); }
+
+/* MENU */
+.menu { flex: 1; overflow-y: auto; padding: 10px; }
+.menu::-webkit-scrollbar { width: 3px; }
+.menu::-webkit-scrollbar-thumb { background: #5a1080; }
+
+.sec-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; color: #ff80c0; margin: 12px 0 6px 2px;
+}
+.sec-title:first-child { margin-top: 4px; }
+
+/* TAMANHOS */
+.sizes-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 4px; }
+.sz-btn {
+  background: #2d0d4e; border: 1.5px solid #5a1080; border-radius: 10px;
+  padding: 10px 4px; cursor: pointer; text-align: center; transition: all 0.12s;
+  user-select: none;
+}
+.sz-btn:active { transform: scale(0.94); background: #3d1060; }
+.sz-label { font-size: 18px; font-weight: 800; color: #ff80c0; }
+.sz-price { font-size: 11px; color: #c080e0; margin-top: 2px; }
+
+/* BOWLS */
+.bowls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.bowl-btn {
+  background: #2d0d4e; border: 1.5px solid #5a1080; border-radius: 10px;
+  padding: 10px 8px; cursor: pointer; text-align: left; transition: all 0.12s;
+  user-select: none;
+}
+.bowl-btn:active { transform: scale(0.96); background: #3d1060; }
+.bowl-name { font-size: 13px; font-weight: 700; color: #f5d0ff; }
+.bowl-ing { font-size: 10px; color: #9060b0; margin-top: 3px; line-height: 1.4; }
+.bowl-price { font-size: 11px; color: #ff80c0; margin-top: 5px; font-weight: 700; }
+
+/* FAZ O TEU */
+.faz-sizes { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+.faz-btn {
+  background: #1a3a10; border: 1.5px solid #2a6a20; border-radius: 10px;
+  padding: 10px 4px; cursor: pointer; text-align: center; transition: all 0.12s;
+  user-select: none;
+}
+.faz-btn:active { transform: scale(0.94); background: #2a4a18; }
+.faz-label { font-size: 18px; font-weight: 800; color: #80ff80; }
+.faz-price { font-size: 11px; color: #60c060; margin-top: 2px; }
+
+/* TOPPINGS */
+.toppings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.top-btn {
+  background: #1e1a30; border: 1px solid #3a3060; border-radius: 8px;
+  padding: 8px 8px; cursor: pointer; text-align: left; transition: all 0.12s;
+  user-select: none;
+}
+.top-btn:active { transform: scale(0.96); }
+.top-name { font-size: 12px; color: #d0c0f0; }
+.top-extra { font-size: 10px; color: #ffd700; margin-top: 2px; }
+
+/* PEDIDO */
+.order-panel {
+  width: 260px; display: flex; flex-direction: column;
+  background: #110820; border-left: 1px solid #2a1040;
+}
+.order-head {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid #2a0848;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: #f0a0d0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.order-count {
+  background: #c2006e; color: #fff; border-radius: 50%;
+  width: 20px; height: 20px; display: flex; align-items: center;
+  justify-content: center; font-size: 11px; font-weight: 700;
+}
+.order-items { flex: 1; overflow-y: auto; padding: 4px 8px; }
+.order-items::-webkit-scrollbar { width: 2px; }
+.order-item {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 5px 4px; border-bottom: 1px solid #1a0838; gap: 4px;
+}
+.order-item-name { font-size: 12px; color: #f0d0ff; flex: 1; line-height: 1.3; }
+.order-item-price { font-size: 11px; font-weight: 700; color: #ff80c0; white-space: nowrap; }
+.order-item-remove {
+  background: none; border: none; color: #c060a0;
+  font-size: 16px; cursor: pointer; padding: 0 2px; line-height: 1;
+}
+.empty-msg { color: #4a1870; font-size: 12px; text-align: center; margin-top: 24px; line-height: 1.6; }
+
+.notes-wrap { padding: 6px 8px; border-top: 1px solid #1a0838; }
+.notes-wrap textarea {
+  width: 100%; background: #1e0d38; border: 1px solid #4a1070;
+  border-radius: 7px; color: #f0d0ff; font-size: 11px; padding: 6px 8px;
+  resize: none; font-family: inherit;
+}
+.notes-wrap textarea::placeholder { color: #5a3080; }
+
+.order-footer { padding: 8px 10px; border-top: 1px solid #2a0848; }
+.total-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.total-lbl { font-size: 13px; color: #c0a0d0; font-weight: 600; }
+.total-val { font-size: 24px; font-weight: 800; color: #ff80c0; }
+.btn-send {
+  width: 100%; padding: 13px;
+  background: linear-gradient(135deg, #c2006e, #8b00a8);
+  border: none; border-radius: 10px;
+  color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-send:active { opacity: 0.8; }
+.btn-send:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-clear {
+  width: 100%; padding: 7px; margin-top: 5px;
+  background: none; border: 1px solid #3a1060; border-radius: 8px;
+  color: #9060c0; font-size: 12px; cursor: pointer;
+}
+
+/* MODAL */
+.modal-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75); z-index: 100;
+  align-items: center; justify-content: center;
+}
+.modal-bg.show { display: flex; }
+.modal-box {
+  background: #2d0d4e; border: 1.5px solid #8b00a8;
+  border-radius: 14px; padding: 20px; min-width: 260px;
+}
+.modal-title { font-size: 15px; font-weight: 700; color: #f0a0d0; margin-bottom: 14px; }
+.modal-sizes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.modal-sz {
+  background: #1a0a2e; border: 1.5px solid #5a1080; border-radius: 10px;
+  padding: 14px 8px; cursor: pointer; text-align: center; transition: all 0.12s;
+}
+.modal-sz:active { background: #2a0a40; border-color: #c2006e; }
+.modal-sz .ms { font-size: 20px; font-weight: 800; color: #ff80c0; }
+.modal-sz .mp { font-size: 13px; color: #c080e0; margin-top: 3px; }
+.modal-cancel {
+  margin-top: 10px; width: 100%; padding: 10px;
+  background: none; border: 1px solid #3a1060; border-radius: 8px;
+  color: #c080e0; font-size: 13px; cursor: pointer;
+}
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #0a4a1a; color: #80ff90; padding: 10px 22px;
+  border-radius: 20px; font-size: 13px; font-weight: 600;
+  opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 200;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍇 Okashi — Caixa</h1>
+  <span id="pedido-label">Pedido #1</span>
+</header>
+
+<div class="layout">
+
+  <!-- MENU -->
+  <div class="menu">
+
+    <!-- BOWLS -->
+    <div class="sec-title">🥣 Bowls</div>
+    <div class="bowls-grid">
+      <div class="bowl-btn" onclick="openModal('Bowl Classica',9,10,12)">
+        <div class="bowl-name">Bowl Clássica</div>
+        <div class="bowl-ing">Banana · Morango · Leite em pó · Granola · Leite condensado</div>
+        <div class="bowl-price">S €9 · M €10 · L €12</div>
+      </div>
+      <div class="bowl-btn" onclick="openModal('Bowl Superfood',9,10,12)">
+        <div class="bowl-name">Bowl Superfood</div>
+        <div class="bowl-ing">Morango · Coco laminado · Linhaça · Granola · Mel</div>
+        <div class="bowl-price">S €9 · M €10 · L €12</div>
+      </div>
+      <div class="bowl-btn" onclick="openModal('Bowl Fitness',9,10,12)">
+        <div class="bowl-name">Bowl Fitness</div>
+        <div class="bowl-ing">Banana · Pepitas choc. · Leite em pó · Granola · Manteiga amendoim</div>
+        <div class="bowl-price">S €9 · M €10 · L €12</div>
+      </div>
+      <div class="bowl-btn" onclick="openModal('Bowl Tropical',9,10,12)">
+        <div class="bowl-name">Bowl Tropical</div>
+        <div class="bowl-ing">Kiwi · Banana · Morango · Coco laminado · Granola</div>
+        <div class="bowl-price">S €9 · M €10 · L €12</div>
+      </div>
+    </div>
+
+    <!-- FAZ O TEU -->
+    <div class="sec-title">✨ Faz o teu açaí — toppings ilimitados</div>
+    <div class="faz-sizes">
+      <div class="faz-btn" onclick="addItem('Acai S',10)">
+        <div class="faz-label">S</div><div class="faz-price">€10</div>
+      </div>
+      <div class="faz-btn" onclick="addItem('Acai M',11)">
+        <div class="faz-label">M</div><div class="faz-price">€11</div>
+      </div>
+      <div class="faz-btn" onclick="addItem('Acai L',14)">
+        <div class="faz-label">L</div><div class="faz-price">€14</div>
+      </div>
+    </div>
+
+    <!-- TOPPINGS FRUTAS -->
+    <div class="sec-title">🍓 Frutas</div>
+    <div class="toppings-grid">
+      <div class="top-btn" onclick="addItem('+ Morango',0)"><div class="top-name">Morango</div></div>
+      <div class="top-btn" onclick="addItem('+ Banana',0)"><div class="top-name">Banana</div></div>
+      <div class="top-btn" onclick="addItem('+ Kiwi',0)"><div class="top-name">Kiwi</div></div>
+    </div>
+
+    <!-- TOPPINGS SOLIDOS -->
+    <div class="sec-title">🥜 Sólidos</div>
+    <div class="toppings-grid">
+      <div class="top-btn" onclick="addItem('+ Granola',0)"><div class="top-name">Granola</div></div>
+      <div class="top-btn" onclick="addItem('+ Aveia',0)"><div class="top-name">Aveia</div></div>
+      <div class="top-btn" onclick="addItem('+ Coco laminado',0)"><div class="top-name">Coco laminado</div></div>
+      <div class="top-btn" onclick="addItem('+ Leite em po',0)"><div class="top-name">Leite em pó</div></div>
+    </div>
+
+    <!-- TOPPINGS LIQUIDOS -->
+    <div class="sec-title">🍯 Líquidos</div>
+    <div class="toppings-grid">
+      <div class="top-btn" onclick="addItem('+ Mel',0)"><div class="top-name">Mel</div></div>
+      <div class="top-btn" onclick="addItem('+ Manteiga amendoim',0)"><div class="top-name">Manteiga amendoim</div></div>
+      <div class="top-btn" onclick="addItem('+ Leite condensado',0)"><div class="top-name">Leite condensado</div></div>
+    </div>
+
+    <!-- EXTRAS -->
+    <div class="sec-title">⭐ Extras</div>
+    <div class="toppings-grid">
+      <div class="top-btn" onclick="addItem('+ Pacoca',1)">
+        <div class="top-name">Paçoca</div>
+        <div class="top-extra">+€1</div>
+      </div>
+      <div class="top-btn" onclick="addItem('+ Nutella',2)">
+        <div class="top-name">Nutella</div>
+        <div class="top-extra">+€2</div>
+      </div>
+      <div class="top-btn" onclick="addItem('+ Whey',2)">
+        <div class="top-name">Whey</div>
+        <div class="top-extra">+€2</div>
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+  </div>
+
+  <!-- PEDIDO -->
+  <div class="order-panel">
+    <div class="order-head">
+      Pedido atual
+      <span class="order-count" id="order-count">0</span>
+    </div>
+    <div class="order-items" id="order-items">
+      <div class="empty-msg">Toca nos itens<br>para adicionar</div>
+    </div>
+    <div class="notes-wrap">
+      <textarea id="notes" rows="2" placeholder="Notas (alergias, etc.)"></textarea>
+    </div>
+    <div class="order-footer">
+      <div class="total-row">
+        <span class="total-lbl">Total</span>
+        <span class="total-val" id="total-val">€0.00</span>
+      </div>
+      <button class="btn-send" id="btn-send" disabled onclick="enviarPedido()">
+        Enviar para cozinha
+      </button>
+      <button class="btn-clear" onclick="limpar()">Limpar pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL tamanho bowl -->
+<div class="modal-bg" id="modal" onclick="closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-title">Escolhe o tamanho</div>
+    <div class="modal-sizes" id="modal-sizes"></div>
+    <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TOKEN = 'patmO0sek368PNMKT.6fafae521b0705c64a45a1f4fcfed111baecc9e4910feceeffa2d4914e99e3f3';
+const BASE  = 'apphwoJIolURQfghd';
+const TABLE = 'tbl8gF8h9BowcLATX';
+
+let items = [];
+let pedidoN = 1;
+let currentBowl = { name:'', s:0, m:0, l:0 };
+
+function addItem(name, price) {
+  items.push({ name, price });
+  render();
+}
+
+function openModal(name, s, m, l) {
+  currentBowl = { name, s, m, l };
+  document.getElementById('modal-title').textContent = name + ' — tamanho';
+  document.getElementById('modal-sizes').innerHTML = `
+    <div class="modal-sz" onclick="addBowl('S',${s})"><div class="ms">S</div><div class="mp">€${s}</div></div>
+    <div class="modal-sz" onclick="addBowl('M',${m})"><div class="ms">M</div><div class="mp">€${m}</div></div>
+    <div class="modal-sz" onclick="addBowl('L',${l})"><div class="ms">L</div><div class="mp">€${l}</div></div>
+  `;
+  document.getElementById('modal').classList.add('show');
+}
+
+function addBowl(size, price) {
+  items.push({ name: currentBowl.name + ' ' + size, price });
+  closeModal();
+  render();
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal'))
+    document.getElementById('modal').classList.remove('show');
+}
+
+function removeItem(i) { items.splice(i, 1); render(); }
+
+function limpar() {
+  items = [];
+  document.getElementById('notes').value = '';
+  render();
+}
+
+function render() {
+  const el = document.getElementById('order-items');
+  const cnt = document.getElementById('order-count');
+  const tot = document.getElementById('total-val');
+  const btn = document.getElementById('btn-send');
+  cnt.textContent = items.length;
+  const total = items.reduce((s,i) => s + i.price, 0);
+  tot.textContent = '€' + total.toFixed(2);
+  btn.disabled = items.length === 0;
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-msg">Toca nos itens<br>para adicionar</div>';
+    return;
+  }
+  el.innerHTML = items.map((item, i) => `
+    <div class="order-item">
+      <div class="order-item-name">${item.name}</div>
+      <div style="display:flex;align-items:center;gap:3px;">
+        ${item.price > 0 ? `<span class="order-item-price">€${item.price.toFixed(2)}</span>` : ''}
+        <button class="order-item-remove" onclick="removeItem(${i})">×</button>
+      </div>
+    </div>`).join('');
+}
+
+async function enviarPedido() {
+  const btn = document.getElementById('btn-send');
+  btn.disabled = true; btn.textContent = 'A enviar...';
+  const notas = document.getElementById('notes').value;
+  const total = items.reduce((s,i) => s + i.price, 0);
+  const itensTexto = items.map(i => i.price > 0 ? `${i.name} (+€${i.price.toFixed(2)})` : i.name).join('\n');
+  try {
+    const resp = await fetch(`https://api.airtable.com/v0/${BASE}/${TABLE}`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: {
+        'NumeroPedido': 'Pedido #' + pedidoN,
+        'Itens': itensTexto,
+        'Total': total,
+        'Estado': 'Novo',
+        'Notas': notas,
+        'Hora': new Date().toISOString()
+      }})
+    });
+    if (resp.ok) {
+      pedidoN++;
+      document.getElementById('pedido-label').textContent = 'Pedido #' + pedidoN;
+      showToast('✅ Enviado para a cozinha!');
+      limpar();
+    } else {
+      const e = await resp.json();
+      alert('Erro: ' + (e.error?.message || JSON.stringify(e)));
+    }
+  } catch(e) { alert('Erro de ligação: ' + e.message); }
+  btn.disabled = false; btn.textContent = 'Enviar para cozinha';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+render();
+</script>
+</body>
+</html>
