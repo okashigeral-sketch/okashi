@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Okashi — Vendedor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:system-ui,-apple-system,sans-serif;background:#fdf0f8;min-height:100vh;padding-bottom:120px}
+
+/* HEADER */
+header{background:#c2006e;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(194,0,110,.3)}
+header h1{font-size:17px;font-weight:800}
+.pedido-tag{background:rgba(255,255,255,.25);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:800}
+
+/* STATUS */
+.status{padding:7px 14px;font-size:12px;background:#fff;border-bottom:1px solid #f0c0e0}
+.status.ok{color:#007a35}.status.err{color:#b00020;background:#fff2f2}
+
+/* SECÇÕES */
+.sec{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#8b00a8;margin:14px 14px 8px;display:flex;align-items:center;gap:6px}
+.sec::after{content:'';flex:1;height:1px;background:#f0d0f0}
+
+/* BOWLS - scroll horizontal */
+.scroll-row{display:flex;gap:10px;padding:0 14px;overflow-x:auto;scrollbar-width:none}
+.scroll-row::-webkit-scrollbar{display:none}
+.bowl-card{flex-shrink:0;width:160px;background:#fff;border:2px solid #f0c0e0;border-radius:14px;padding:12px 10px;cursor:pointer;transition:all .12s}
+.bowl-card:active{border-color:#c2006e;background:#fff0f8;transform:scale(.97)}
+.bowl-card-name{font-size:14px;font-weight:800;color:#8b00a8}
+.bowl-card-ing{font-size:10px;color:#aaa;margin-top:3px;line-height:1.4}
+.bowl-card-price{font-size:12px;color:#c2006e;margin-top:6px;font-weight:700}
+
+/* TAMANHOS - 3 botões grandes */
+.size-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:0 14px}
+.sz-btn{background:#fff;border:2px solid #f0c0e0;border-radius:14px;padding:18px 8px;cursor:pointer;text-align:center;transition:all .12s}
+.sz-btn:active{border-color:#c2006e;transform:scale(.95)}
+.sz-label{font-size:28px;font-weight:900;color:#8b00a8}
+.sz-price{font-size:13px;color:#c2006e;margin-top:4px;font-weight:700}
+
+/* Só açaí */
+.sz-btn-sa{background:#f0f8ff;border-color:#a0c8e0}
+.sz-btn-sa .sz-label{color:#1a5a8a;font-size:22px}
+.sz-btn-sa .sz-price{color:#2a7ab0}
+
+/* TOPPINGS */
+.top-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px}
+.top-btn{background:#fff;border:1.5px solid #f0e0f8;border-radius:12px;padding:14px 12px;cursor:pointer;transition:all .12s}
+.top-btn:active{background:#f8f0ff;border-color:#c2006e;transform:scale(.97)}
+.top-name{font-size:15px;color:#333;font-weight:600}
+.top-extra{font-size:11px;color:#c2006e;margin-top:3px;font-weight:700}
+
+/* PEDIDO FIXO EM BAIXO */
+.order-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #f0d0f0;padding:10px 14px 20px;box-shadow:0 -4px 16px rgba(0,0,0,.1)}
+.order-items{max-height:90px;overflow-y:auto;margin-bottom:8px}
+.order-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #faf0ff;font-size:13px}
+.oi-name{color:#333;font-weight:500;flex:1}
+.oi-price{color:#c2006e;font-weight:700;font-size:12px;margin-right:6px}
+.oi-rm{background:none;border:none;color:#ddd;font-size:18px;cursor:pointer;padding:0;line-height:1}
+.order-empty{font-size:13px;color:#ddd;text-align:center;padding:8px 0}
+.order-footer{display:flex;align-items:center;gap:10px}
+.order-total{font-size:22px;font-weight:900;color:#c2006e;white-space:nowrap}
+.btn-send{flex:1;padding:14px;background:#c2006e;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(194,0,110,.3)}
+.btn-send:disabled{opacity:.3;cursor:not-allowed;box-shadow:none}
+.btn-clear{padding:14px 12px;background:none;border:1.5px solid #f0d0f0;border-radius:12px;color:#bbb;font-size:13px;cursor:pointer}
+
+/* OPÇÕES */
+.opcoes{padding:0 14px;display:flex;flex-direction:column;gap:8px}
+.praia-btn{width:100%;padding:14px;border-radius:12px;border:2px solid #a0c8e0;background:#f0f8ff;color:#1a5a8a;font-size:15px;font-weight:800;cursor:pointer;text-align:left}
+.praia-btn.on{background:#1a5a8a;border-color:#1a5a8a;color:#fff}
+.praia-extra{display:none;margin-top:4px}
+.field-input{width:100%;padding:13px 14px;border:1.5px solid #f0d0f0;border-radius:12px;font-size:15px;font-family:inherit;color:#333;background:#fff}
+.field-input::placeholder{color:#ccc}
+
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
+.modal.show{display:flex}
+.mbox{background:#fff;border-radius:20px 20px 0 0;padding:22px 20px 36px;width:100%;max-width:500px;box-shadow:0 -8px 32px rgba(0,0,0,.2)}
+.mbox h2{font-size:20px;font-weight:800;color:#8b00a8;margin-bottom:16px;text-align:center}
+.bowl-sizes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.bsz{background:#f8f0ff;border:2px solid #e0c0f0;border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;transition:all .12s}
+.bsz.sel{background:#8b00a8;border-color:#8b00a8}
+.bsz.sel .bs,.bsz.sel .bp{color:#fff}
+.bs{font-size:24px;font-weight:800;color:#8b00a8}
+.bp{font-size:13px;color:#c2006e;margin-top:3px;font-weight:700}
+.ing-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin-bottom:10px}
+.ing-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.ing{padding:10px 16px;border-radius:20px;border:1.5px solid #e0c0f0;background:#f0fff0;cursor:pointer;font-size:14px;font-weight:600;color:#007a35;user-select:none}
+.ing.rm{background:#fff0f0;border-color:#ffaaaa;color:#ccc;text-decoration:line-through}
+.sz-hint{font-size:12px;color:#e06000;text-align:center;margin-bottom:10px;display:none;font-weight:600}
+.mbtns{display:flex;gap:10px}
+.mbtn-ok{flex:1;padding:14px;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:800;cursor:pointer;background:#8b00a8}
+.mbtn-no{flex:1;padding:14px;background:none;border:1.5px solid #ddd;border-radius:12px;color:#aaa;font-size:15px;cursor:pointer}
+
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#007a35;color:#fff;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* ALERTA PEDIDO PRONTO */
+.pronto-overlay{display:none;position:fixed;inset:0;background:rgba(0,122,53,.95);z-index:400;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
+.pronto-overlay.show{display:flex}
+.pronto-emoji{font-size:80px;margin-bottom:16px}
+.pronto-title{font-size:32px;font-weight:900;color:#fff;margin-bottom:8px}
+.pronto-num{font-size:22px;color:rgba(255,255,255,.9);margin-bottom:24px}
+.pronto-btn{background:#fff;color:#007a35;border:none;border-radius:20px;padding:16px 40px;font-size:20px;font-weight:900;cursor:pointer}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍇 Okashi — Vendedor</h1>
+  <span class="pedido-tag" id="pedido-tag">#1</span>
+</header>
+<div id="status" class="status ok">A ligar...</div>
+
+<!-- BOWLS -->
+<div class="sec">🥣 Bowls com nome</div>
+<div class="scroll-row">
+  <div class="bowl-card" onclick="openBowl('Bowl Classica',9,10,12,['Banana','Morango','Leite em po','Granola','Leite condensado'])">
+    <div class="bowl-card-name">Bowl Clássica</div>
+    <div class="bowl-card-ing">Banana · Morango · Leite em pó · Granola · Leite condensado</div>
+    <div class="bowl-card-price">S €9 · M €10 · L €12</div>
+  </div>
+  <div class="bowl-card" onclick="openBowl('Bowl Superfood',9,10,12,['Morango','Coco laminado','Linhaca','Granola','Mel'])">
+    <div class="bowl-card-name">Bowl Superfood</div>
+    <div class="bowl-card-ing">Morango · Coco laminado · Linhaça · Granola · Mel</div>
+    <div class="bowl-card-price">S €9 · M €10 · L €12</div>
+  </div>
+  <div class="bowl-card" onclick="openBowl('Bowl Fitness',9,10,12,['Banana','Aveia','Leite em po','Granola','Manteiga amendoim'])">
+    <div class="bowl-card-name">Bowl Fitness</div>
+    <div class="bowl-card-ing">Banana · Aveia · Leite em pó · Granola · Manteiga amendoim</div>
+    <div class="bowl-card-price">S €9 · M €10 · L €12</div>
+  </div>
+  <div class="bowl-card" onclick="openBowl('Bowl Tropical',9,10,12,['Kiwi','Banana','Morango','Coco laminado','Granola'])">
+    <div class="bowl-card-name">Bowl Tropical</div>
+    <div class="bowl-card-ing">Kiwi · Banana · Morango · Coco laminado · Granola</div>
+    <div class="bowl-card-price">S €9 · M €10 · L €12</div>
+  </div>
+</div>
+
+<!-- SÓ AÇAÍ -->
+<div class="sec" style="color:#1a5a8a">🍇 Só açaí</div>
+<div class="size-row">
+  <div class="sz-btn sz-btn-sa" onclick="addItem('So Acai S',9)"><div class="sz-label">S</div><div class="sz-price">€9</div></div>
+  <div class="sz-btn sz-btn-sa" onclick="addItem('So Acai M',10)"><div class="sz-label">M</div><div class="sz-price">€10</div></div>
+  <div class="sz-btn sz-btn-sa" onclick="addItem('So Acai L',12)"><div class="sz-label">L</div><div class="sz-price">€12</div></div>
+</div>
+
+<!-- FAZ O TEU AÇAÍ -->
+<div class="sec">✨ Faz o teu açaí</div>
+<div class="size-row">
+  <div class="sz-btn" onclick="addItem('Acai S',10)"><div class="sz-label">S</div><div class="sz-price">€10</div></div>
+  <div class="sz-btn" onclick="addItem('Acai M',11)"><div class="sz-label">M</div><div class="sz-price">€11</div></div>
+  <div class="sz-btn" onclick="addItem('Acai L',14)"><div class="sz-label">L</div><div class="sz-price">€14</div></div>
+</div>
+
+<!-- FRUTAS -->
+<div class="sec">🍓 Frutas</div>
+<div class="top-grid">
+  <div class="top-btn" onclick="addItem('+ Morango',0)"><div class="top-name">Morango</div></div>
+  <div class="top-btn" onclick="addItem('+ Banana',0)"><div class="top-name">Banana</div></div>
+  <div class="top-btn" onclick="addItem('+ Kiwi',0)"><div class="top-name">Kiwi</div></div>
+</div>
+
+<!-- SÓLIDOS -->
+<div class="sec">🥜 Sólidos</div>
+<div class="top-grid">
+  <div class="top-btn" onclick="addItem('+ Granola',0)"><div class="top-name">Granola</div></div>
+  <div class="top-btn" onclick="addItem('+ Aveia',0)"><div class="top-name">Aveia</div></div>
+  <div class="top-btn" onclick="addItem('+ Coco laminado',0)"><div class="top-name">Coco laminado</div></div>
+  <div class="top-btn" onclick="addItem('+ Leite em po',0)"><div class="top-name">Leite em pó</div></div>
+</div>
+
+<!-- LÍQUIDOS -->
+<div class="sec">🍯 Líquidos</div>
+<div class="top-grid">
+  <div class="top-btn" onclick="addItem('+ Mel',0)"><div class="top-name">Mel</div></div>
+  <div class="top-btn" onclick="addItem('+ Manteiga amendoim',0)"><div class="top-name">Manteiga amendoim</div></div>
+  <div class="top-btn" onclick="addItem('+ Leite condensado',0)"><div class="top-name">Leite condensado</div></div>
+</div>
+
+<!-- EXTRAS -->
+<div class="sec">⭐ Extras</div>
+<div class="top-grid">
+  <div class="top-btn" onclick="addItem('+ Pacoca',1)"><div class="top-name">Paçoca</div><div class="top-extra">+€1</div></div>
+  <div class="top-btn" onclick="addItem('+ Nutella',2)"><div class="top-name">Nutella</div><div class="top-extra">+€2</div></div>
+  <div class="top-btn" onclick="addItem('+ Whey',2)"><div class="top-name">Whey</div><div class="top-extra">+€2</div></div>
+  <div class="top-btn" onclick="addItem('+ Franui',1.5)"><div class="top-name">Franui</div><div class="top-extra">+€1.50</div></div>
+  <div class="top-btn" style="border-color:#ffd700;background:#fffdf0" onclick="addItem('+ Topping extra',0.5)"><div class="top-name" style="color:#cc8800">Topping extra</div><div class="top-extra">+€0.50</div></div>
+</div>
+
+<!-- OPÇÕES -->
+<div class="sec">📋 Opções</div>
+<div class="opcoes">
+  <textarea class="field-input" id="notas" rows="2" placeholder="📝 Notas (alergias, etc.)" style="resize:none"></textarea>
+  <button class="praia-btn" id="btn-praia" onclick="togglePraia()">🏖️ Pedido na praia</button>
+  <div class="praia-extra" id="praia-extra">
+    <input class="field-input" id="nome-cliente" type="text" placeholder="📱 Nome ou nº telemóvel do cliente">
+  </div>
+</div>
+
+<div style="height:20px"></div>
+
+<!-- BARRA INFERIOR FIXA -->
+<div class="order-bar">
+  <div class="order-items" id="order-items">
+    <div class="order-empty">Toca nos itens para adicionar</div>
+  </div>
+  <div class="order-footer">
+    <span class="order-total" id="total">€0</span>
+    <button class="btn-clear" onclick="limpar()">🗑️</button>
+    <button class="btn-send" id="btn-send" disabled onclick="enviar()">Enviar ✓</button>
+  </div>
+</div>
+
+<!-- MODAL BOWL -->
+<div class="modal" id="m-bowl" onclick="closeM(event)">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <h2 id="bowl-t">Bowl</h2>
+    <div class="bowl-sizes" id="bowl-szs"></div>
+    <div class="sz-hint" id="sz-hint">Escolhe um tamanho!</div>
+    <div class="ing-title">Toca para remover ingredientes</div>
+    <div class="ing-list" id="ing-list"></div>
+    <div class="mbtns">
+      <button class="mbtn-no" onclick="closeM()">Cancelar</button>
+      <button class="mbtn-ok" onclick="confirmBowl()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ALERTA PEDIDO PRONTO -->
+<div class="pronto-overlay" id="pronto-overlay">
+  <div class="pronto-emoji">✅</div>
+  <div class="pronto-title">Pedido pronto!</div>
+  <div class="pronto-num" id="pronto-num"></div>
+  <button class="pronto-btn" onclick="fecharPronto()">OK, vou buscar!</button>
+</div>
+
+<script>
+const TOKEN='patxsjHccHr0MqzD4.3c2af2923a6de35efe015937845b6ab4b9d59d81c561c18cb9cc7eb472cdc0bd';
+const BASE='app1DlNHDekbP5asp';
+const TABLE='tblQU3C1h4D8mxuqA';
+const F_PRAIA='fldTYaDYtS1PjIYjj';
+const F_ONDE='fldwo12QNCHgPmd1R';
+const F_TEL='fldWju4PvnQaAGeps';
+
+let items=[],pedidoN=parseInt(localStorage.getItem('okashi_vendedor')||'1'),bowlData={},praia=false;
+
+function setStatus(msg,ok=true){const s=document.getElementById('status');s.textContent=msg;s.className='status '+(ok?'ok':'err');}
+function updateN(){document.getElementById('pedido-tag').textContent='#'+pedidoN;}
+updateN();
+
+function togglePraia(){praia=!praia;document.getElementById('btn-praia').classList.toggle('on',praia);document.getElementById('praia-extra').style.display=praia?'block':'none';if(!praia)document.getElementById('nome-cliente').value='';}
+
+function addItem(name,price){items.push({name,price});render();}
+
+function openBowl(name,s,m,l,ings){
+  bowlData={name,s,m,l,ings,size:null,removed:[]};
+  document.getElementById('bowl-t').textContent=name;
+  document.getElementById('sz-hint').style.display='none';
+  document.getElementById('bowl-szs').innerHTML=[['S',s],['M',m],['L',l]].map(([sz,pr])=>
+    `<div class="bsz" id="bsz-${sz}" onclick="selSz('${sz}',${pr})"><div class="bs">${sz}</div><div class="bp">€${pr}</div></div>`).join('');
+  document.getElementById('ing-list').innerHTML=ings.map(ing=>
+    `<div class="ing" id="ing-${ing.replace(/\s/g,'_')}" onclick="togIng('${ing}')">${ing}</div>`).join('');
+  document.getElementById('m-bowl').classList.add('show');
+}
+function selSz(sz,pr){bowlData.size={sz,pr};document.querySelectorAll('.bsz').forEach(e=>e.classList.remove('sel'));document.getElementById('bsz-'+sz).classList.add('sel');document.getElementById('sz-hint').style.display='none';}
+function togIng(ing){const el=document.getElementById('ing-'+ing.replace(/\s/g,'_'));if(bowlData.removed.includes(ing)){bowlData.removed=bowlData.removed.filter(x=>x!==ing);el.classList.remove('rm');}else{bowlData.removed.push(ing);el.classList.add('rm');}}
+function confirmBowl(){if(!bowlData.size){document.getElementById('sz-hint').style.display='block';return;}let name=bowlData.name+' '+bowlData.size.sz;if(bowlData.removed.length)name+=' (sem '+bowlData.removed.join(', ')+')';items.push({name,price:bowlData.size.pr});closeM();render();}
+function closeM(e){if(!e||e.target===document.getElementById('m-bowl'))document.getElementById('m-bowl').classList.remove('show');}
+function removeItem(i){items.splice(i,1);render();}
+
+function limpar(){
+  items=[];praia=false;
+  document.getElementById('notas').value='';
+  document.getElementById('nome-cliente').value='';
+  document.getElementById('btn-praia').classList.remove('on');
+  document.getElementById('praia-extra').style.display='none';
+  render();
+}
+
+function render(){
+  const total=items.reduce((s,i)=>s+i.price,0);
+  document.getElementById('total').textContent='€'+total.toFixed(2).replace('.00','');
+  document.getElementById('btn-send').disabled=items.length===0;
+  const el=document.getElementById('order-items');
+  if(!items.length){el.innerHTML='<div class="order-empty">Toca nos itens para adicionar</div>';return;}
+  el.innerHTML=items.map((item,i)=>`
+    <div class="order-item">
+      <span class="oi-name">${item.name}</span>
+      ${item.price>0?`<span class="oi-price">€${item.price.toFixed(2)}</span>`:''}
+      <button class="oi-rm" onclick="removeItem(${i})">×</button>
+    </div>`).join('');
+}
+
+async function enviar(){
+  const btn=document.getElementById('btn-send');
+  btn.disabled=true;btn.textContent='A enviar...';
+  const notas=document.getElementById('notas').value;
+  const nomeCliente=document.getElementById('nome-cliente').value.trim();
+  const total=items.reduce((s,i)=>s+i.price,0);
+  const itens=items.map(i=>i.price>0?`${i.name} (+€${i.price.toFixed(2)})`:i.name).join('\n');
+  const notaFinal=[notas,praia?'🏖️ PRAIA':''].filter(Boolean).join(' | ');
+  try{
+    const fields={NumeroPedido:'Pedido #'+pedidoN,Itens:itens,Total:total,Estado:'Novo',Notas:notaFinal,Hora:new Date().toISOString(),[F_PRAIA]:praia};
+    if(praia&&nomeCliente){fields[F_ONDE]='Praia';fields[F_TEL]=nomeCliente;}
+    const r=await fetch(`https://api.airtable.com/v0/${BASE}/${TABLE}`,{method:'POST',headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},body:JSON.stringify({fields})});
+    if(r.ok){
+      const numAtual = pedidoN;
+      showToast('✅ Pedido #'+numAtual+(praia?' 🏖️':'')+' enviado!');
+      setStatus('✅ Pedido #'+numAtual+' enviado. Vais ser avisado quando estiver pronto!');
+      const recId = (await (await fetch(`https://api.airtable.com/v0/${BASE}/${TABLE}?sort[0][field]=Hora&sort[0][direction]=desc&maxRecords=1`,{headers:{Authorization:'Bearer '+TOKEN}})).json()).records[0]?.id;
+      if(recId) guardarPedido(recId, 'Pedido #'+numAtual);
+      pedidoN++;localStorage.setItem('okashi_vendedor',pedidoN);updateN();limpar();
+    }else{const e=await r.json();setStatus('❌ Erro: '+(e.error?.message||''),false);alert('Erro ao enviar');}
+  }catch(e){setStatus('❌ Sem ligação',false);alert('Erro de ligação');}
+  btn.disabled=false;btn.textContent='Enviar ✓';
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// Verificar ligação
+fetch(`https://api.airtable.com/v0/${BASE}/${TABLE}?maxRecords=1`,{headers:{Authorization:'Bearer '+TOKEN}})
+  .then(r=>setStatus(r.ok?'✅ Ligado ao Airtable.':'❌ Erro de ligação',r.ok))
+  .catch(()=>setStatus('❌ Sem ligação',false));
+
+// ---- VERIFICAÇÃO DE PEDIDOS PRONTOS ----
+// Guarda os IDs dos pedidos enviados por este vendedor
+let meusPedidos = JSON.parse(localStorage.getItem('okashi_meus_pedidos')||'[]');
+let prontosMostrados = JSON.parse(localStorage.getItem('okashi_prontos_mostrados')||'[]');
+
+function guardarPedido(id, numPedido) {
+  meusPedidos.push({id, numPedido});
+  // Manter só os últimos 20
+  if(meusPedidos.length > 20) meusPedidos = meusPedidos.slice(-20);
+  localStorage.setItem('okashi_meus_pedidos', JSON.stringify(meusPedidos));
+}
+
+function fecharPronto() {
+  document.getElementById('pronto-overlay').classList.remove('show');
+}
+
+function beepPronto() {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    [880,1047,1319,1047,1319].forEach((freq,i) => {
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.value=freq;
+      const t=ctx.currentTime+i*.2;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.5,t+.05);
+      g.gain.linearRampToValueAtTime(0,t+.18);
+      o.start(t);o.stop(t+.2);
+    });
+  } catch(e) {}
+}
+
+async function verificarProntos() {
+  if(!meusPedidos.length) return;
+  const pendentes = meusPedidos.filter(p => !prontosMostrados.includes(p.id));
+  if(!pendentes.length) return;
+  try {
+    const ids = pendentes.map(p => `records[]=${p.id}`).join('&');
+    const r = await fetch(`https://api.airtable.com/v0/${BASE}/${TABLE}?${ids}`, {headers:{Authorization:'Bearer '+TOKEN}});
+    if(!r.ok) return;
+    const data = await r.json();
+    const prontos = (data.records||[]).filter(rec => {
+      const e = rec.fields.Estado;
+      const nome = typeof e==='string'?e:(e?.name||'');
+      return nome === 'Pronto';
+    });
+    if(prontos.length > 0) {
+      const primeiro = prontos[0];
+      const info = meusPedidos.find(p => p.id === primeiro.id);
+      prontosMostrados.push(...prontos.map(p=>p.id));
+      localStorage.setItem('okashi_prontos_mostrados', JSON.stringify(prontosMostrados));
+      document.getElementById('pronto-num').textContent = info ? info.numPedido + ' está pronto para levantar!' : 'O teu pedido está pronto!';
+      document.getElementById('pronto-overlay').classList.add('show');
+      beepPronto();
+    }
+  } catch(e) {}
+}
+
+setInterval(verificarProntos, 10000);
+// ----------------------------------------
+
+render();
+</script>
+</body>
+</html>
