@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Okashi — Vendedor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:system-ui,-apple-system,sans-serif;background:#fdf0f8;min-height:100vh;padding-bottom:160px}
+
+header{background:#c2006e;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(194,0,110,.3)}
+.h-left{display:flex;flex-direction:column}
+.h-title{font-size:16px;font-weight:900;color:#fff}
+.h-status{font-size:10px;color:rgba(255,255,255,.75);margin-top:1px}
+.h-num{background:rgba(255,255,255,.2);border-radius:20px;padding:6px 14px;font-size:18px;font-weight:900;color:#fff}
+
+/* SECÇÕES */
+.sec{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#8b00a8;margin:16px 14px 8px;display:flex;align-items:center;gap:6px}
+.sec::after{content:'';flex:1;height:1px;background:#f0d0f0}
+
+/* BOWLS - cards em scroll horizontal */
+.scroll-x{display:flex;gap:10px;padding:0 14px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.scroll-x::-webkit-scrollbar{display:none}
+.bowl-card{flex-shrink:0;width:140px;background:#fff;border:2px solid #f0c0e0;border-radius:14px;padding:12px 10px;cursor:pointer;transition:all .12s;active:scale(.97)}
+.bowl-card:active{border-color:#c2006e;background:#fff0f8;transform:scale(.97)}
+.bc-name{font-size:14px;font-weight:800;color:#8b00a8}
+.bc-price{font-size:12px;color:#c2006e;margin-top:6px;font-weight:700}
+
+/* TAMANHOS grandes para dedo */
+.sz-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:0 14px}
+.sz-card{background:#fff;border:2px solid #f0c0e0;border-radius:14px;padding:18px 8px;cursor:pointer;text-align:center;transition:all .12s}
+.sz-card:active{border-color:#c2006e;background:#fff0f8;transform:scale(.96)}
+.sz-big{font-size:28px;font-weight:900;color:#8b00a8}
+.sz-pr{font-size:13px;color:#c2006e;margin-top:4px;font-weight:700}
+.sz-card-sa{background:#f0f8ff;border-color:#a0c8e0}
+.sz-card-sa .sz-big{color:#1a5a8a;font-size:22px}
+.sz-card-sa .sz-pr{color:#2a7ab0}
+
+/* TOPPINGS */
+.top-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px}
+.top-card{background:#fff;border:1.5px solid #f0e0f8;border-radius:12px;padding:14px 12px;cursor:pointer;transition:all .12s}
+.top-card:active{background:#f8f0ff;border-color:#c2006e;transform:scale(.97)}
+.top-nm{font-size:15px;color:#333;font-weight:600}
+.top-pr{font-size:11px;color:#c2006e;margin-top:3px;font-weight:700}
+
+/* OPÇÕES */
+.opcoes{padding:0 14px;display:flex;flex-direction:column;gap:8px}
+.notas-input{width:100%;padding:13px 14px;border:1.5px solid #f0d0f0;border-radius:12px;font-size:15px;font-family:inherit;color:#333;resize:none;background:#fff}
+.notas-input::placeholder{color:#ccc}
+.praia-btn{width:100%;padding:14px;border-radius:12px;border:2px solid #a0c8e0;background:#f0f8ff;color:#1a5a8a;font-size:15px;font-weight:800;cursor:pointer;text-align:left}
+.praia-btn.on{background:#1a5a8a;border-color:#1a5a8a;color:#fff}
+.praia-extra{display:none;margin-top:6px}
+.field-input{width:100%;padding:13px 14px;border:1.5px solid #f0d0f0;border-radius:12px;font-size:15px;font-family:inherit;color:#333;background:#fff}
+.field-input::placeholder{color:#ccc}
+
+/* BARRA INFERIOR FIXA */
+.order-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #f0d0f0;padding:10px 14px 28px;box-shadow:0 -4px 20px rgba(0,0,0,.1);z-index:40}
+.order-scroll{max-height:80px;overflow-y:auto;margin-bottom:8px}
+.order-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #faf0ff}
+.oi-name{font-size:12px;color:#333;font-weight:600;flex:1}
+.oi-name.is-acai{color:#8b00a8;font-weight:800}
+.oi-price{font-size:11px;font-weight:700;color:#c2006e;margin-right:6px;white-space:nowrap}
+.oi-rm{background:none;border:none;color:#ddd;font-size:18px;cursor:pointer;line-height:1;padding:0 2px}
+.order-empty{font-size:13px;color:#ddd;text-align:center;padding:8px 0}
+.order-footer{display:flex;align-items:center;gap:10px}
+.order-total{font-size:26px;font-weight:900;color:#c2006e;white-space:nowrap}
+.btn-send{flex:1;padding:16px;background:#c2006e;border:none;border-radius:14px;color:#fff;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(194,0,110,.35)}
+.btn-send:disabled{opacity:.3;cursor:not-allowed;box-shadow:none}
+.btn-trash{padding:16px 14px;background:none;border:1.5px solid #f0d0f0;border-radius:12px;color:#bbb;font-size:18px;cursor:pointer}
+
+/* ALERTA PEDIDO PRONTO */
+.pronto-overlay{display:none;position:fixed;inset:0;background:rgba(0,122,53,.96);z-index:200;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
+.pronto-overlay.show{display:flex}
+.pronto-emoji{font-size:80px;margin-bottom:16px}
+.pronto-title{font-size:30px;font-weight:900;color:#fff;margin-bottom:8px}
+.pronto-sub{font-size:18px;color:rgba(255,255,255,.9);margin-bottom:28px;line-height:1.5}
+.pronto-btn{background:#fff;color:#007a35;border:none;border-radius:20px;padding:16px 40px;font-size:20px;font-weight:900;cursor:pointer}
+
+/* MODAL BOWL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-end;justify-content:center}
+.modal.show{display:flex}
+.mbox{background:#fff;border-radius:20px 20px 0 0;padding:22px 18px 36px;width:100%;max-width:500px}
+.mbox h2{font-size:20px;font-weight:800;color:#8b00a8;margin-bottom:16px;text-align:center}
+.bowl-szs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.bsz{background:#f8f0ff;border:2px solid #e0c0f0;border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;transition:all .12s}
+.bsz.sel{background:#8b00a8;border-color:#8b00a8}
+.bsz.sel .bs,.bsz.sel .bp{color:#fff}
+.bs{font-size:24px;font-weight:800;color:#8b00a8}
+.bp{font-size:13px;color:#c2006e;margin-top:3px;font-weight:700}
+.ing-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin-bottom:10px}
+.ing-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.ing{padding:10px 16px;border-radius:20px;border:1.5px solid #e0c0f0;background:#f0fff0;cursor:pointer;font-size:14px;font-weight:600;color:#007a35;user-select:none}
+.ing.rm{background:#fff0f0;border-color:#ffaaaa;color:#ccc;text-decoration:line-through}
+.sz-hint{font-size:12px;color:#e06000;text-align:center;margin-bottom:10px;display:none;font-weight:600}
+.mbtns{display:flex;gap:10px}
+.mbtn-ok{flex:1;padding:14px;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:800;cursor:pointer;background:#8b00a8}
+.mbtn-no{flex:1;padding:14px;background:none;border:1.5px solid #ddd;border-radius:12px;color:#aaa;font-size:15px;cursor:pointer}
+
+/* MODAL TOPPING EXTRA */
+.top-list-modal{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;max-height:60vh;overflow-y:auto}
+.top-choice{padding:12px;border-radius:10px;border:1.5px solid #f0e0f8;background:#fff;cursor:pointer;transition:all .12s}
+.top-choice:active{background:#f8f0ff;border-color:#c2006e}
+.top-choice-name{font-size:14px;font-weight:700;color:#333}
+.top-choice-price{font-size:12px;color:#c2006e;font-weight:700;margin-top:3px}
+
+/* SUCESSO */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#007a35;color:#fff;padding:10px 22px;border-radius:20px;font-size:14px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-left">
+    <div class="h-title">🍇 Okashi — Vendedor</div>
+    <div class="h-status" id="h-status">A ligar...</div>
+  </div>
+  <div class="h-num" id="h-num">#1</div>
+</header>
+
+<!-- BOWLS -->
+<div class="sec">🥣 Bowls</div>
+<div class="scroll-x">
+  <div class="bowl-card" onclick="openBowl('Bowl Classica',9,10,12,['Banana','Morango','Leite em po','Granola','Leite condensado'])">
+    <div class="bc-name">Clássica</div>
+    <div class="bc-price">S €9 · M €10 · L €12</div>
+  </div>
+  <div class="bowl-card" onclick="openBowl('Bowl Superfood',9,10,12,['Morango','Coco laminado','Linhaca','Granola','Mel'])">
+    <div class="bc-name">Superfood</div>
+    <div class="bc-price">S €9 · M €10 · L €12</div>
+  </div>
+  <div class="bowl-card" onclick="openBowl('Bowl Fitness',9,10,12,['Banana','Aveia','Leite em po','Granola','Manteiga amendoim'])">
+    <div class="bc-name">Fitness</div>
+    <div class="bc-price">S €9 · M €10 · L €12</div>
+  </div>
+  <div class="bowl-card" onclick="openBowl('Bowl Tropical',9,10,12,['Kiwi','Banana','Morango','Coco laminado','Granola'])">
+    <div class="bc-name">Tropical</div>
+    <div class="bc-price">S €9 · M €10 · L €12</div>
+  </div>
+</div>
+
+<!-- SÓ AÇAÍ -->
+<div class="sec" style="color:#1a5a8a">🍇 Só açaí</div>
+<div class="sz-grid">
+  <div class="sz-card sz-card-sa" onclick="addAcai('So Acai S',9)"><div class="sz-big">S</div><div class="sz-pr">€9</div></div>
+  <div class="sz-card sz-card-sa" onclick="addAcai('So Acai M',10)"><div class="sz-big">M</div><div class="sz-pr">€10</div></div>
+  <div class="sz-card sz-card-sa" onclick="addAcai('So Acai L',12)"><div class="sz-big">L</div><div class="sz-pr">€12</div></div>
+</div>
+
+<!-- FAZ O TEU AÇAÍ -->
+<div class="sec">✨ Faz o teu açaí</div>
+<div class="sz-grid">
+  <div class="sz-card" onclick="addAcai('Acai S',10)"><div class="sz-big">S</div><div class="sz-pr">€10</div></div>
+  <div class="sz-card" onclick="addAcai('Acai M',11)"><div class="sz-big">M</div><div class="sz-pr">€11</div></div>
+  <div class="sz-card" onclick="addAcai('Acai L',14)"><div class="sz-big">L</div><div class="sz-pr">€14</div></div>
+</div>
+
+<!-- FRUTAS -->
+<div class="sec">🍓 Frutas</div>
+<div class="top-grid">
+  <div class="top-card" onclick="addItem('+ Morango',0)"><div class="top-nm">Morango</div></div>
+  <div class="top-card" onclick="addItem('+ Banana',0)"><div class="top-nm">Banana</div></div>
+  <div class="top-card" onclick="addItem('+ Kiwi',0)"><div class="top-nm">Kiwi</div></div>
+</div>
+
+<!-- SÓLIDOS -->
+<div class="sec">🥜 Sólidos</div>
+<div class="top-grid">
+  <div class="top-card" onclick="addItem('+ Granola',0)"><div class="top-nm">Granola</div></div>
+  <div class="top-card" onclick="addItem('+ Aveia',0)"><div class="top-nm">Aveia</div></div>
+  <div class="top-card" onclick="addItem('+ Coco laminado',0)"><div class="top-nm">Coco laminado</div></div>
+  <div class="top-card" onclick="addItem('+ Leite em po',0)"><div class="top-nm">Leite em pó</div></div>
+</div>
+
+<!-- LÍQUIDOS -->
+<div class="sec">🍯 Líquidos</div>
+<div class="top-grid">
+  <div class="top-card" onclick="addItem('+ Mel',0)"><div class="top-nm">Mel</div></div>
+  <div class="top-card" onclick="addItem('+ Manteiga amendoim',0)"><div class="top-nm">Manteiga amendoim</div></div>
+  <div class="top-card" onclick="addItem('+ Leite condensado',0)"><div class="top-nm">Leite condensado</div></div>
+</div>
+
+<!-- EXTRAS -->
+<div class="sec">⭐ Extras</div>
+<div class="top-grid">
+  <div class="top-card" onclick="addItem('+ Pacoca',1)"><div class="top-nm">Paçoca</div><div class="top-pr">+€1</div></div>
+  <div class="top-card" onclick="addItem('+ Nutella',2)"><div class="top-nm">Nutella</div><div class="top-pr">+€2</div></div>
+  <div class="top-card" onclick="addItem('+ Whey',2)"><div class="top-nm">Whey</div><div class="top-pr">+€2</div></div>
+  <div class="top-card" onclick="addItem('+ Franui',1.5)"><div class="top-nm">Franui</div><div class="top-pr">+€1.50</div></div>
+  <div class="top-card" style="border-color:#ffd700;background:#fffdf0" onclick="abrirTopExtra()"><div class="top-nm" style="color:#cc8800">Topping extra</div><div class="top-pr">+€0.50</div></div>
+</div>
+
+<!-- OPÇÕES -->
+<div class="sec">📋 Opções</div>
+<div class="opcoes">
+  <textarea class="notas-input" id="notas" rows="2" placeholder="📝 Notas (alergias, etc.)"></textarea>
+  <button class="praia-btn" id="btn-praia" onclick="togglePraia()">🏖️ Pedido na praia</button>
+  <div class="praia-extra" id="praia-extra">
+    <input class="field-input" id="nome-cliente" type="text" placeholder="📱 Nome ou nº telemóvel do cliente">
+  </div>
+</div>
+
+<div style="height:20px"></div>
+
+<!-- BARRA INFERIOR -->
+<div class="order-bar">
+  <div class="order-scroll" id="order-scroll">
+    <div class="order-empty" id="order-empty">Adiciona itens ao pedido</div>
+  </div>
+  <div class="order-footer">
+    <span class="order-total" id="total">€0</span>
+    <button class="btn-trash" onclick="limpar()">🗑️</button>
+    <button class="btn-send" id="btn-send" disabled onclick="enviar()">Enviar ✓</button>
+  </div>
+</div>
+
+<!-- ALERTA PRONTO -->
+<div class="pronto-overlay" id="pronto-overlay">
+  <div class="pronto-emoji">✅</div>
+  <div class="pronto-title">Pedido pronto!</div>
+  <div class="pronto-sub" id="pronto-sub">O teu pedido está pronto!</div>
+  <button class="pronto-btn" onclick="fecharPronto()">OK, vou buscar! 🍇</button>
+</div>
+
+<!-- MODAL BOWL -->
+<div class="modal" id="m-bowl" onclick="closeM('m-bowl',event)">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <h2 id="bowl-t">Bowl</h2>
+    <div class="bowl-szs" id="bowl-szs"></div>
+    <div class="sz-hint" id="sz-hint">Escolhe um tamanho!</div>
+    <div class="ing-title">Toca para remover ingredientes</div>
+    <div class="ing-list" id="ing-list"></div>
+    <div class="mbtns">
+      <button class="mbtn-no" onclick="closeM('m-bowl')">Cancelar</button>
+      <button class="mbtn-ok" onclick="confirmBowl()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TOPPING EXTRA -->
+<div class="modal" id="m-top" onclick="closeM('m-top',event)">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <h2 style="color:#cc8800">⭐ Topping extra</h2>
+    <div class="top-list-modal">
+      <div class="top-choice" onclick="addTopExtra('Morango',0.5)"><div class="top-choice-name">🍓 Morango</div><div class="top-choice-price">+€0.50</div></div>
+      <div class="top-choice" onclick="addTopExtra('Banana',0.5)"><div class="top-choice-name">🍌 Banana</div><div class="top-choice-price">+€0.50</div></div>
+      <div class="top-choice" onclick="addTopExtra('Kiwi',0.5)"><div class="top-choice-name">🥝 Kiwi</div><div class="top-choice-price">+€0.50</div></div>
+      <div class="top-choice" onclick="addTopExtra('Granola',0.5)"><div class="top-choice-name">🌾 Granola</div><div class="top-choice-price">+€0.50</div></div>
+      <div class="top-choice" onclick="addTopExtra('Aveia',0.5)"><div class="top-choice-name">Aveia</div><div class="top-choice-price">+€0.50</div></div>
+      <div class="top-choice" onclick="addTopExtra('Coco laminado',0.5)"><div class="top-choice-name">🥥 Coco</div><div class="top-choice-price">+€0.50</div></div>
+      <div class="top-choice" onclick="addTopExtra('Leite em po',0.5)"><div class="top-choice-name">Leite em pó</div><div class="top-choice-price">+€0.50</div></div>
+      <div class="top-choice" onclick="addTopExtra('Mel',0.5)"><div class="top-choice-name">🍯 Mel</div><div class="top-choice-price">+€0.50</div></div>
+      <div class="top-choice" onclick="addTopExtra('Manteiga amendoim',0.5)"><div class="top-choice-name">🥜 Manteiga</div><div class="top-choice-price">+€0.50</div></div>
+      <div class="top-choice" onclick="addTopExtra('Leite condensado',0.5)"><div class="top-choice-name">Leite condensado</div><div class="top-choice-price">+€0.50</div></div>
+      <div class="top-choice" onclick="addTopExtra('Franui',1.5)"><div class="top-choice-name">Franui</div><div class="top-choice-price">+€1.50</div></div>
+      <div class="top-choice" onclick="addTopExtra('Paçoca',1)"><div class="top-choice-name">Paçoca</div><div class="top-choice-price">+€1.00</div></div>
+      <div class="top-choice" onclick="addTopExtra('Nutella',2)"><div class="top-choice-name">Nutella</div><div class="top-choice-price">+€2.00</div></div>
+      <div class="top-choice" onclick="addTopExtra('Whey',2)"><div class="top-choice-name">Whey</div><div class="top-choice-price">+€2.00</div></div>
+    </div>
+    <button class="mbtn-no" style="width:100%" onclick="closeM('m-top')">Cancelar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TOKEN='patxsjHccHr0MqzD4.3c2af2923a6de35efe015937845b6ab4b9d59d81c561c18cb9cc7eb472cdc0bd';
+const BASE='app1DlNHDekbP5asp';
+const TABLE='tblQU3C1h4D8mxuqA';
+const F_PRAIA='fldTYaDYtS1PjIYjj';
+const F_ONDE='fldwo12QNCHgPmd1R';
+const F_TEL='fldWju4PvnQaAGeps';
+
+let items=[],bowlData={},praia=false;
+let pedidoN=parseInt(localStorage.getItem('okashi_vendedor')||'1');
+let acaiCount=0;
+let meusPedidos=JSON.parse(localStorage.getItem('okashi_v_pedidos')||'[]');
+let prontosMostrados=JSON.parse(localStorage.getItem('okashi_v_prontos')||'[]');
+
+function updateN(){document.getElementById('h-num').textContent='#'+pedidoN;}
+updateN();
+
+function contarAcais(){return items.filter(i=>i.isAcai).length;}
+
+function addAcai(name,price){
+  const n=contarAcais()+1;
+  items.push({name,price,isAcai:true,acaiNum:n});
+  render();
+}
+function addItem(name,price){items.push({name,price,isAcai:false});render();}
+function abrirTopExtra(){document.getElementById('m-top').classList.add('show');}
+function addTopExtra(nome,preco){items.push({name:'+ Topping extra ('+nome+')',price:preco,isAcai:false});closeM('m-top');render();}
+
+function togglePraia(){
+  praia=!praia;
+  document.getElementById('btn-praia').classList.toggle('on',praia);
+  document.getElementById('praia-extra').style.display=praia?'block':'none';
+  if(!praia)document.getElementById('nome-cliente').value='';
+}
+
+function openBowl(name,s,m,l,ings){
+  bowlData={name,s,m,l,ings,size:null,removed:[]};
+  document.getElementById('bowl-t').textContent=name;
+  document.getElementById('sz-hint').style.display='none';
+  document.getElementById('bowl-szs').innerHTML=[['S',s],['M',m],['L',l]].map(([sz,pr])=>
+    `<div class="bsz" id="bsz-${sz}" onclick="selSz('${sz}',${pr})"><div class="bs">${sz}</div><div class="bp">€${pr}</div></div>`).join('');
+  document.getElementById('ing-list').innerHTML=ings.map(ing=>
+    `<div class="ing" id="ing-${ing.replace(/\s/g,'_')}" onclick="togIng('${ing}')">${ing}</div>`).join('');
+  document.getElementById('m-bowl').classList.add('show');
+}
+function selSz(sz,pr){bowlData.size={sz,pr};document.querySelectorAll('.bsz').forEach(e=>e.classList.remove('sel'));document.getElementById('bsz-'+sz).classList.add('sel');document.getElementById('sz-hint').style.display='none';}
+function togIng(ing){const el=document.getElementById('ing-'+ing.replace(/\s/g,'_'));if(bowlData.removed.includes(ing)){bowlData.removed=bowlData.removed.filter(x=>x!==ing);el.classList.remove('rm');}else{bowlData.removed.push(ing);el.classList.add('rm');}}
+function confirmBowl(){
+  if(!bowlData.size){document.getElementById('sz-hint').style.display='block';return;}
+  const n=contarAcais()+1;
+  let name=bowlData.name+' '+bowlData.size.sz;
+  if(bowlData.removed.length)name+=' (sem '+bowlData.removed.join(', ')+')';
+  items.push({name,price:bowlData.size.pr,isAcai:true,acaiNum:n});
+  closeM('m-bowl');render();
+}
+function closeM(id,e){if(!e||e.target===document.getElementById(id))document.getElementById(id).classList.remove('show');}
+function removeItem(i){items.splice(i,1);let n=1;items.forEach(it=>{if(it.isAcai)it.acaiNum=n++;});render();}
+function limpar(){
+  items=[];praia=false;
+  document.getElementById('notas').value='';
+  document.getElementById('nome-cliente').value='';
+  document.getElementById('btn-praia').classList.remove('on');
+  document.getElementById('praia-extra').style.display='none';
+  render();
+}
+
+function render(){
+  const total=items.reduce((s,i)=>s+i.price,0);
+  document.getElementById('total').textContent='€'+total.toFixed(2).replace('.00','');
+  document.getElementById('btn-send').disabled=items.length===0;
+  const scroll=document.getElementById('order-scroll');
+  const empty=document.getElementById('order-empty');
+  if(!items.length){
+    if(empty)empty.style.display='block';
+    scroll.innerHTML='<div class="order-empty">Adiciona itens ao pedido</div>';
+    return;
+  }
+  scroll.innerHTML=items.map((item,i)=>`
+    <div class="order-item">
+      <span class="oi-name ${item.isAcai?'is-acai':''}">${item.isAcai?'#'+item.acaiNum+' ':''}${item.name}</span>
+      ${item.price>0?`<span class="oi-price">€${item.price.toFixed(2)}</span>`:''}
+      <button class="oi-rm" onclick="removeItem(${i})">×</button>
+    </div>`).join('');
+}
+
+async function enviar(){
+  const btn=document.getElementById('btn-send');
+  btn.disabled=true;btn.textContent='A enviar...';
+  const notas=document.getElementById('notas').value;
+  const nomeCliente=document.getElementById('nome-cliente').value.trim();
+  const total=items.reduce((s,i)=>s+i.price,0);
+  const itens=items.map(i=>{
+    const nm=i.isAcai?`#${i.acaiNum} ${i.name}`:i.name;
+    return i.price>0?`${nm} (+€${i.price.toFixed(2)})`:nm;
+  }).join('\n');
+  const notaFinal=[notas,praia?'🏖️ PRAIA':''].filter(Boolean).join(' | ');
+  try{
+    const fields={NumeroPedido:'Pedido #'+pedidoN,Itens:itens,Total:total,Estado:'Novo',Notas:notaFinal,Hora:new Date().toISOString(),[F_PRAIA]:praia};
+    if(praia&&nomeCliente){fields[F_ONDE]='Praia';fields[F_TEL]=nomeCliente;}
+    const r=await fetch(`https://api.airtable.com/v0/${BASE}/${TABLE}`,{method:'POST',headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},body:JSON.stringify({fields})});
+    if(r.ok){
+      const data=await r.json();
+      const recId=data.id;
+      if(recId){
+        meusPedidos.push({id:recId,num:'Pedido #'+pedidoN});
+        if(meusPedidos.length>20)meusPedidos=meusPedidos.slice(-20);
+        localStorage.setItem('okashi_v_pedidos',JSON.stringify(meusPedidos));
+      }
+      showToast('✅ Pedido #'+pedidoN+' enviado!');
+      document.getElementById('h-status').textContent='✅ Pedido #'+pedidoN+' enviado';
+      pedidoN++;localStorage.setItem('okashi_vendedor',pedidoN);updateN();limpar();
+    }else{
+      document.getElementById('h-status').textContent='❌ Erro ao enviar';
+      alert('Erro ao enviar pedido');
+    }
+  }catch(e){document.getElementById('h-status').textContent='❌ Sem ligação';alert('Sem ligação');}
+  btn.disabled=false;btn.textContent='Enviar ✓';
+}
+
+// VERIFICAR PEDIDOS PRONTOS
+function fecharPronto(){document.getElementById('pronto-overlay').classList.remove('show');}
+
+function beepPronto(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [880,1047,1319,1047,1319].forEach((freq,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.value=freq;
+      const t=ctx.currentTime+i*.2;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.5,t+.05);
+      g.gain.linearRampToValueAtTime(0,t+.18);
+      o.start(t);o.stop(t+.2);
+    });
+  }catch(e){}
+}
+
+async function verificarProntos(){
+  const pendentes=meusPedidos.filter(p=>!prontosMostrados.includes(p.id));
+  if(!pendentes.length)return;
+  try{
+    const ids=pendentes.map(p=>`records[]=${p.id}`).join('&');
+    const r=await fetch(`https://api.airtable.com/v0/${BASE}/${TABLE}?${ids}`,{headers:{Authorization:'Bearer '+TOKEN}});
+    if(!r.ok)return;
+    const data=await r.json();
+    const prontos=(data.records||[]).filter(rec=>{
+      const e=rec.fields.Estado;
+      return(typeof e==='string'?e:(e?.name||''))==='Pronto';
+    });
+    if(prontos.length){
+      prontos.forEach(p=>prontosMostrados.push(p.id));
+      localStorage.setItem('okashi_v_prontos',JSON.stringify(prontosMostrados));
+      const info=meusPedidos.find(p=>p.id===prontos[0].id);
+      document.getElementById('pronto-sub').textContent=(info?info.num:'O teu pedido')+' está pronto para levantar!';
+      document.getElementById('pronto-overlay').classList.add('show');
+      beepPronto();
+    }
+  }catch(e){}
+}
+
+// Verificar ligação
+fetch(`https://api.airtable.com/v0/${BASE}/${TABLE}?maxRecords=1`,{headers:{Authorization:'Bearer '+TOKEN}})
+  .then(r=>document.getElementById('h-status').textContent=r.ok?'✅ Ligado':'❌ Erro de ligação')
+  .catch(()=>document.getElementById('h-status').textContent='❌ Sem ligação');
+
+setInterval(verificarProntos,10000);
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+render();
+</script>
+</body>
+</html>
