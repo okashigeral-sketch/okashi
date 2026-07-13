@@ -46,7 +46,9 @@ h1{font-size:18px;font-weight:800}
 .card.done .acai-block{border-left-color:#007a35}
 .acai-block:last-child{margin-bottom:0}
 .acai-main{font-size:17px;font-weight:900;color:#111;margin-bottom:4px}
+.acai-num{font-size:12px;font-weight:800;background:#c2006e;color:#fff;border-radius:10px;padding:1px 7px;margin-right:5px;vertical-align:middle}
 .acai-top{font-size:13px;font-weight:700;color:#333;padding:1px 0}
+.acai-top.top-extra{font-weight:900;color:#cc8800;background:#fffbf0;border-radius:4px;padding:2px 5px;margin-top:2px;display:inline-block}
 .acai-top::before{content:"· ";color:#888}
 
 /* NOTAS */
@@ -223,8 +225,8 @@ function render(){
     const blocos=parseItens(f.Itens);
     const blocosHtml=blocos.length>0
       ? blocos.map(b=>`<div class="acai-block">
-          <div class="acai-main">${b.principal}</div>
-          ${b.toppings.map(t=>`<div class="acai-top">${t}</div>`).join('')}
+          <div class="acai-main">${b.num?`<span class="acai-num">#${b.num}</span>`:''} ${b.principal}</div>
+          ${b.toppings.map(t=>`<div class="acai-top${t.toLowerCase().includes('topping extra')||t.toLowerCase().includes('extra')?'  top-extra':''">${t}</div>`).join('')}
         </div>`).join('')
       : `<div style="font-size:14px;color:#888;padding:4px 0">${f.Itens||''}</div>`;
 
