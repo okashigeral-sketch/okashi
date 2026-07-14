@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Okashi — Cozinha</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f0faf5;height:100vh;display:flex;flex-direction:column}
+header{background:#007a35;color:#fff;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0}
+h1{font-size:18px;font-weight:800}
+.hbtns{display:flex;gap:6px;align-items:center}
+.hbtn{background:#fff;border:0;border-radius:18px;padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer;color:#007a35}
+.live{font-size:12px;opacity:.95}
+.status{background:#fff;border-bottom:1px solid #c7ead3;padding:7px 12px;font-size:12px;flex-shrink:0}
+.status.ok{color:#007a35}.status.err{color:#b00020;background:#fff2f2}
+.tabs{display:flex;background:#fff;border-bottom:2px solid #c7ead3;flex-shrink:0}
+.tab{flex:1;text-align:center;padding:13px 8px;font-size:16px;font-weight:800;color:#999;cursor:pointer;border-bottom:4px solid transparent}
+.tab.active-new{color:#e03030;background:#fff7f7;border-bottom-color:#e03030}
+.tab.active-done{color:#007a35;background:#f7fff9;border-bottom-color:#007a35}
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:25px;padding:0 7px;border-radius:14px;color:#fff;font-size:13px;margin-left:6px}
+.content{flex:1;overflow:auto;padding:12px}
+
+/* CARD */
+.card{background:#fff;border:2.5px solid #e03030;border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.09)}
+.card.done{border-color:#007a35}
+.card.praia:not(.done){border-color:#0066cc}
+
+/* CARD HEAD */
+.cardHead{padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;background:#ffe8e8}
+.card.done .cardHead{background:#e8fff0}
+.card.praia:not(.done) .cardHead{background:#e0f0ff}
+.numrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.num{font-size:26px;font-weight:950;color:#1a1a1a}
+.praia-tag{background:#0066cc;color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:10px}
+.times{font-size:12px;color:#444;text-align:right;line-height:2}
+.times b{font-weight:900;font-size:13px}
+
+/* ENTREGA */
+.entrega{margin:0 14px 0;padding:10px 12px;background:#e0f0ff;border-left:4px solid #0066cc;border-radius:0 8px 8px 0;font-size:14px;font-weight:900;color:#003a7a;border-top:1px solid #eee}
+.entrega:empty{display:none}
+
+/* ITENS - cada açaí num bloco */
+.body{padding:10px 14px}
+.acai-block{background:#f5f5f5;border-radius:9px;padding:9px 12px;margin-bottom:7px;border-left:4px solid #e03030}
+.card.done .acai-block{border-left-color:#007a35}
+.acai-block:last-child{margin-bottom:0}
+.acai-main{font-size:17px;font-weight:900;color:#111;margin-bottom:4px}
+.acai-num{font-size:12px;font-weight:800;background:#c2006e;color:#fff;border-radius:10px;padding:1px 7px;margin-right:5px;vertical-align:middle}
+.acai-top{font-size:13px;font-weight:700;color:#333;padding:1px 0}
+.acai-top.top-extra{font-weight:900;color:#cc8800;background:#fffbf0;border-radius:4px;padding:2px 5px;margin-top:2px;display:inline-block}
+.acai-top::before{content:"· ";color:#888}
+
+/* NOTAS */
+.nota{margin:0 14px 10px;background:#fff8e0;border-left:4px solid #cc8800;border-radius:0 9px 9px 0;padding:8px 10px;font-size:13px;color:#735000;font-weight:700;border-top:1px solid #eee}
+
+/* BOTÃO PRONTO */
+.btnReady{width:100%;border:0;background:#007a35;color:#fff;padding:15px;font-size:18px;font-weight:900;cursor:pointer;border-top:1px solid #eee}
+.btnReady:active{opacity:.85}
+
+.empty{text-align:center;padding:60px 20px;color:#8bb99a;font-size:17px;font-weight:700}
+.naopago{background:#ff0000;color:#fff;font-size:22px;font-weight:900;text-align:center;padding:12px;letter-spacing:2px;border-radius:0}
+.alert{display:none;background:#e03030;color:#fff;text-align:center;padding:13px;font-size:17px;font-weight:900;flex-shrink:0}
+.alert.show{display:block}
+.small{font-size:11px;color:#789;margin-top:8px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.mbox{background:#fff;border-radius:16px;padding:22px;min-width:300px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.mbox h2{font-size:20px;font-weight:800;color:#007a35;margin-bottom:8px}
+.mbox p{font-size:13px;color:#888;margin-bottom:16px;line-height:1.5}
+.mbtns{display:flex;gap:10px}
+.mok{flex:1;padding:12px;background:#007a35;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:800;cursor:pointer}
+.mno{flex:1;padding:12px;background:none;border:1.5px solid #ddd;border-radius:10px;color:#aaa;font-size:14px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍃 Okashi — Cozinha</h1>
+  <div class="hbtns">
+    <button class="hbtn" onclick="fetchOrders()">🔄 Atualizar</button>
+    <button class="hbtn" onclick="mostrarTudo()">👁️ Mostrar tudo</button>
+    <button class="hbtn" onclick="abrirNovoDia()">🌅 Novo dia</button>
+    <div class="live" id="live">A ligar...</div>
+  </div>
+</header>
+
+<div id="status" class="status ok">A verificar ligação...</div>
+<div class="alert" id="alert">🔔 NOVO PEDIDO!</div>
+
+<div class="tabs">
+  <div id="tabNew" class="tab active-new" onclick="setTab('Novo')">🔴 Novos <span id="countNew" class="badge" style="background:#e03030">0</span></div>
+  <div id="tabDone" class="tab" onclick="setTab('Pronto')">✅ Feitos <span id="countDone" class="badge" style="background:#007a35">0</span></div>
+</div>
+
+<div id="content" class="content"><div class="empty">A carregar pedidos...</div></div>
+
+<div class="modal" id="modal-nd">
+  <div class="mbox">
+    <h2>🌅 Novo dia</h2>
+    <p>O ecrã vai ficar limpo.<br>Dados guardados no Airtable.</p>
+    <div class="mbtns">
+      <button class="mno" onclick="fecharND()">Cancelar</button>
+      <button class="mok" onclick="confirmarND()">Começar novo dia</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOKEN='patxsjHccHr0MqzD4.3c2af2923a6de35efe015937845b6ab4b9d59d81c561c18cb9cc7eb472cdc0bd';
+const BASE='app1DlNHDekbP5asp';
+const TABLE='tblQU3C1h4D8mxuqA';
+const F_FIM='fld4K0OjUMi1s4N63';
+const F_TEMPO='fldEgrlDTm6SGWsDT';
+const F_PRAIA='fldTYaDYtS1PjIYjj';
+const F_ONDE='fldwo12QNCHgPmd1R';
+const F_TEL='fldWju4PvnQaAGeps';
+
+let orders=[],activeTab='Novo',knownIds=new Set(),firstLoad=true;
+let inicioDia=localStorage.getItem('ok_inicio')||null;
+
+function estado(r){
+  const e=r.fields.Estado;
+  if(!e)return'';
+  if(typeof e==='string')return e.trim();
+  return(e.name||'').trim();
+}
+function hr(v){
+  if(!v)return'';
+  try{return new Date(v).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});}catch(e){return'';}
+}
+function mins(de,ate){
+  if(!de||!ate)return null;
+  return Math.round((new Date(ate)-new Date(de))/60000);
+}
+
+// Parsing dos itens - separa açaís dos toppings
+function parseItens(txt){
+  if(!txt)return[];
+  const linhas=txt.split('\n').filter(x=>x.trim());
+  const blocos=[];
+  let atual=null;
+  for(const l of linhas){
+    const linha=l.trim();
+    if(!linha.startsWith('+')){
+      if(atual)blocos.push(atual);
+      // Remove preço do nome principal ex: "Bowl Classica M (+€10.00)"
+      const nome=linha.replace(/\s*\(\+€[\d.]+\)\s*$/,'').trim();
+      atual={principal:nome,toppings:[]};
+    } else {
+      const top=linha.replace(/^\+\s*/,'').replace(/\s*\(\+€[\d.]+\)\s*$/,'').trim();
+      if(atual)atual.toppings.push(top);
+      else{if(!blocos.length)blocos.push({principal:'',toppings:[]});blocos[blocos.length-1].toppings.push(top);}
+    }
+  }
+  if(atual)blocos.push(atual);
+  return blocos;
+}
+
+function setStatus(msg,ok=true){
+  const s=document.getElementById('status');
+  s.textContent=msg;
+  s.className='status '+(ok?'ok':'err');
+}
+function setTab(t){
+  activeTab=t;
+  document.getElementById('tabNew').className='tab '+(t==='Novo'?'active-new':'');
+  document.getElementById('tabDone').className='tab '+(t==='Pronto'?'active-done':'');
+  render();
+}
+function mostrarTudo(){inicioDia=null;localStorage.removeItem('ok_inicio');fetchOrders();}
+function abrirNovoDia(){document.getElementById('modal-nd').classList.add('show');}
+function fecharND(){document.getElementById('modal-nd').classList.remove('show');}
+function confirmarND(){
+  inicioDia=new Date().toISOString();
+  localStorage.setItem('ok_inicio',inicioDia);
+  fecharND();fetchOrders();
+}
+function filtrar(os){
+  if(!inicioDia)return os;
+  return os.filter(o=>(o.fields.Hora||'')>=inicioDia);
+}
+
+function render(){
+  const todos=filtrar(orders);
+  const novos=todos.filter(o=>estado(o)==='Novo').sort((a,b)=>new Date(a.fields.Hora||0)-new Date(b.fields.Hora||0));
+  const feitos=todos.filter(o=>estado(o)==='Pronto').sort((a,b)=>new Date(b.fields.Hora||0)-new Date(a.fields.Hora||0));
+  document.getElementById('countNew').textContent=novos.length;
+  document.getElementById('countDone').textContent=feitos.length;
+  const lista=activeTab==='Novo'?novos:feitos;
+  const c=document.getElementById('content');
+  if(!lista.length){
+    c.innerHTML='<div class="empty">'+(activeTab==='Novo'?'🍃 Sem pedidos novos':'✅ Sem pedidos feitos')+'<div class="small">Carrega em Atualizar se acabaste de enviar um pedido.</div></div>';
+    return;
+  }
+  const agora=new Date().toISOString();
+  c.innerHTML=lista.map(o=>{
+    const f=o.fields;
+    const done=estado(o)==='Pronto';
+    const isPraia=f[F_PRAIA]===true;
+    const chegada=f.Hora;
+    const fim=f[F_FIM];
+    const tempoTotal=fim&&chegada?mins(chegada,fim):null;
+    const tempoEspera=!done&&chegada?mins(chegada,agora):null;
+    const onde=f[F_ONDE]||'';
+    const tel=f[F_TEL]||'';
+
+    // Tempos
+    let timesHtml='';
+    if(chegada)timesHtml+=`<div>📥 <b>${hr(chegada)}</b></div>`;
+    if(fim)timesHtml+=`<div>✅ <b>${hr(fim)}</b></div>`;
+    if(tempoTotal!==null)timesHtml+=`<div>⏱️ <b>${tempoTotal} min</b></div>`;
+    else if(tempoEspera!==null)timesHtml+=`<div style="color:#e03030">⏳ <b>${tempoEspera} min</b></div>`;
+
+    // Entrega
+    let entregaHtml='';
+    if(onde||tel){
+      const parts=[];
+      if(onde)parts.push('📍 '+onde);
+      if(tel)parts.push('📱 '+tel);
+      entregaHtml=`<div class="entrega">${parts.join(' · ')}</div>`;
+    }
+
+    // Itens - cada açaí num bloco separado, todos a negrito
+    const blocos=parseItens(f.Itens);
+    const blocosHtml=blocos.length>0
+      ? blocos.map(b=>`<div class="acai-block">
+          <div class="acai-main">${b.num?`<span class="acai-num">#${b.num}</span>`:''} ${b.principal}</div>
+          ${b.toppings.map(t=>`<div class="acai-top${t.toLowerCase().includes('topping extra')||t.toLowerCase().includes('extra')?'  top-extra':''">${t}</div>`).join('')}
+        </div>`).join('')
+      : `<div style="font-size:14px;color:#888;padding:4px 0">${f.Itens||''}</div>`;
+
+    const cardClass=['card',done?'done':'',isPraia?'praia':''].filter(Boolean).join(' ');
+
+    return`<div class="${cardClass}">
+      <div class="cardHead">
+        <div class="numrow">
+          <span class="num">${f.NumeroPedido||'Pedido'}</span>
+          ${isPraia?'<span class="praia-tag">🏖️ PRAIA</span>':''}
+        </div>
+        <div class="times">${timesHtml}</div>
+      </div>
+      ${entregaHtml}
+      <div class="body">${blocosHtml}</div>
+      ${f.Notas&&!f.Notas.includes('Pagamento:')?`<div class="naopago">⚠️ NÃO PAGO — COBRAR ⚠️</div>`:''}
+      ${f.Notas?`<div class="nota">📝 ${f.Notas}</div>`:''}
+      ${!done?`<button class="btnReady" onclick="marcarPronto('${o.id}','${chegada||''}')">✅ Marcar como pronto</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function marcarPronto(id,chegada){
+  const agora=new Date().toISOString();
+  const tempo=chegada?mins(chegada,agora):null;
+  try{
+    const fields={Estado:'Pronto',[F_FIM]:agora};
+    if(tempo!==null)fields[F_TEMPO]=tempo;
+    await fetch(`https://api.airtable.com/v0/${BASE}/${TABLE}/${id}`,{
+      method:'PATCH',
+      headers:{Authorization:'Bearer '+TOKEN,'Content-Type':'application/json'},
+      body:JSON.stringify({fields})
+    });
+    const o=orders.find(x=>x.id===id);
+    if(o){
+      o.fields.Estado='Pronto';
+      o.fields[F_FIM]=agora;
+      if(tempo!==null)o.fields[F_TEMPO]=tempo;
+    }
+    render();
+  }catch(e){setStatus('Erro: '+e.message,false);}
+}
+
+function beep(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [1047,1319,1047,1319,1047].forEach((freq,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);o.frequency.value=freq;o.type='square';
+      const t=ctx.currentTime+i*.18;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.35,t+.02);
+      g.gain.linearRampToValueAtTime(0,t+.16);o.start(t);o.stop(t+.2);
+    });
+  }catch(e){}
+}
+
+async function fetchOrders(){
+  try{
+    document.getElementById('live').textContent='A atualizar...';
+    const hoje=new Date().toISOString().slice(0,10);
+    const dataInicio=hoje+'T00:00:00.000Z';
+    const dataFim=hoje+'T23:59:59.000Z';
+    const filtro=encodeURIComponent(`AND({Hora}>='${dataInicio}',{Hora}<='${dataFim}')`);
+    const url=`https://api.airtable.com/v0/${BASE}/${TABLE}?sort%5B0%5D%5Bfield%5D=Hora&sort%5B0%5D%5Bdirection%5D=asc&maxRecords=100&filterByFormula=${filtro}`;
+    const r=await fetch(url,{headers:{Authorization:'Bearer '+TOKEN}});
+    if(!r.ok){const err=await r.text();setStatus('Erro '+r.status+': '+err,false);document.getElementById('live').textContent='Erro';return;}
+    const data=await r.json();
+    const recs=data.records||[];
+    const filtered=inicioDia?recs.filter(x=>(x.fields.Hora||'')>=inicioDia):recs;
+    const newOnes=filtered.filter(x=>!knownIds.has(x.id)&&estado(x)==='Novo');
+    if(!firstLoad&&newOnes.length){
+      beep();
+      document.getElementById('alert').classList.add('show');
+      setTimeout(()=>document.getElementById('alert').classList.remove('show'),3000);
+      setTab('Novo');
+    }
+    recs.forEach(x=>knownIds.add(x.id));
+    orders=recs;firstLoad=false;
+    document.getElementById('live').textContent=new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const novos=filtered.filter(x=>estado(x)==='Novo').length;
+    const feitos=filtered.filter(x=>estado(x)==='Pronto').length;
+    setStatus('✅ Ligado. Novos: '+novos+' · Feitos: '+feitos+'.',true);
+    render();
+  }catch(e){
+    setStatus('Sem ligação: '+e.message,false);
+    document.getElementById('live').textContent='Sem ligação';
+  }
+}
+fetchOrders();
+setInterval(fetchOrders,7000);
+</script>
+</body>
+</html>
