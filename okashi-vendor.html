@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Okashi Açaí — Vendedor</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,-apple-system,'Nunito',sans-serif;background:#fdf0f8;min-height:100vh;}
+
+.tabbar{display:flex;position:sticky;top:0;z-index:60;background:#c2006e;box-shadow:0 2px 8px rgba(194,0,110,.3)}
+.tabbtn{flex:1;border:none;background:transparent;color:rgba(255,255,255,.7);font-weight:800;font-size:13px;padding:13px 4px;cursor:pointer;border-bottom:3px solid transparent}
+.tabbtn.active{color:#fff;border-bottom-color:#fff}
+.panel{display:none}
+.panel.active{display:block}
+
+#panel-novo{background:#fdf0f8;padding-bottom:170px}
+#panel-novo header{background:#c2006e;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:41px;z-index:50}
+.h-title{font-size:15px;font-weight:900;color:#fff}
+.h-status{font-size:10px;color:rgba(255,255,255,.75);margin-top:1px}
+.h-num{background:rgba(255,255,255,.2);border-radius:16px;padding:5px 12px;font-size:16px;font-weight:900;color:#fff}
+.h-btns{display:flex;gap:6px;align-items:center}
+.h-icon-btn{background:rgba(255,255,255,.2);border:none;border-radius:16px;padding:6px 9px;font-size:14px;cursor:pointer}
+.sec{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#8b00a8;margin:14px 14px 7px;display:flex;align-items:center;gap:6px}
+.sec::after{content:'';flex:1;height:1px;background:#f0d0f0}
+.scroll-x{display:flex;gap:8px;padding:0 14px;overflow-x:auto;scrollbar-width:none}
+.scroll-x::-webkit-scrollbar{display:none}
+.bc{flex-shrink:0;width:110px;background:#fff;border:2px solid #f0c0e0;border-radius:12px;padding:10px 8px;cursor:pointer}
+.bc:active{border-color:#c2006e;background:#fff0f8}
+.bc-name{font-size:13px;font-weight:800;color:#8b00a8}
+.bc-price{font-size:11px;color:#c2006e;margin-top:4px;font-weight:700}
+.sz-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 14px}
+.sz{background:#fff;border:2px solid #f0c0e0;border-radius:12px;padding:12px 6px;cursor:pointer;text-align:center}
+.sz:active{border-color:#c2006e;background:#fff0f8}
+.sz-l{font-size:22px;font-weight:900;color:#8b00a8}
+.sz-p{font-size:12px;color:#c2006e;margin-top:3px;font-weight:700}
+.sz-sa{background:#f0f8ff;border-color:#a0c8e0}
+.sz-sa .sz-l{color:#1a5a8a;font-size:18px}
+.sz-sa .sz-p{color:#2a7ab0}
+.top-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 14px}
+.top{background:#fff;border:1.5px solid #f0e0f8;border-radius:10px;padding:10px 10px;cursor:pointer}
+.top:active{background:#f8f0ff;border-color:#c2006e}
+.top-n{font-size:13px;color:#333;font-weight:600}
+.top-p{font-size:10px;color:#c2006e;margin-top:2px;font-weight:700}
+.opts{padding:0 14px;display:flex;flex-direction:column;gap:8px}
+.opt-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#8b00a8;margin-bottom:4px}
+.field-in{width:100%;padding:12px 14px;border:1.5px solid #f0d0f0;border-radius:10px;font-size:15px;font-family:inherit;color:#333;background:#fff}
+.field-in::placeholder{color:#ccc}
+.btn-row{display:flex;gap:6px}
+.opt-btn{flex:1;padding:11px 4px;border-radius:10px;border:1.5px solid #f0d0f0;background:#fff;color:#8b00a8;font-size:13px;font-weight:700;cursor:pointer;text-align:center}
+.opt-btn.on{background:#8b00a8;border-color:#8b00a8;color:#fff}
+.pay-btn{flex:1;padding:11px 4px;border-radius:10px;border:1.5px solid #f0d0f0;background:#fff;color:#007a35;font-size:13px;font-weight:700;cursor:pointer;text-align:center}
+.pay-btn.on{background:#007a35;border-color:#007a35;color:#fff}
+.praia-btn{width:100%;padding:12px;border-radius:10px;border:2px solid #a0c8e0;background:#f0f8ff;color:#1a5a8a;font-size:14px;font-weight:800;cursor:pointer;text-align:left}
+.praia-btn.on{background:#1a5a8a;border-color:#1a5a8a;color:#fff}
+.bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #f0d0f0;padding:8px 14px 24px;box-shadow:0 -4px 16px rgba(0,0,0,.1);z-index:40}
+.bar-items{max-height:72px;overflow-y:auto;margin-bottom:7px}
+.bi{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #faf0ff}
+.bi-n{font-size:12px;color:#333;font-weight:600;flex:1}
+.bi-n.acai{color:#8b00a8;font-weight:800}
+.bi-p{font-size:11px;font-weight:700;color:#c2006e;margin-right:5px}
+.bi-rm{background:none;border:none;color:#ddd;font-size:16px;cursor:pointer;line-height:1}
+.bar-empty{font-size:12px;color:#ddd;text-align:center;padding:6px 0}
+.bar-foot{display:flex;align-items:center;gap:8px}
+.bar-total{font-size:24px;font-weight:900;color:#c2006e;white-space:nowrap}
+.btn-trash{padding:14px 12px;background:none;border:1.5px solid #f0d0f0;border-radius:10px;color:#bbb;font-size:16px;cursor:pointer}
+.btn-send{flex:1;padding:15px;background:#c2006e;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:800;cursor:pointer}
+.btn-send:disabled{opacity:.3;cursor:not-allowed}
+.pronto{display:none;position:fixed;inset:0;background:rgba(0,122,53,.96);z-index:200;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
+.pronto.show{display:flex}
+.pronto-em{font-size:80px;margin-bottom:16px}
+.pronto-t{font-size:28px;font-weight:900;color:#fff;margin-bottom:8px}
+.pronto-s{font-size:16px;color:rgba(255,255,255,.9);margin-bottom:28px}
+.pronto-ok{background:#fff;color:#007a35;border:none;border-radius:20px;padding:14px 36px;font-size:18px;font-weight:900;cursor:pointer}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-end;justify-content:center}
+.modal.show{display:flex}
+.mbox{background:#fff;border-radius:20px 20px 0 0;padding:20px 16px 34px;width:100%;max-width:500px}
+.mbox h2{font-size:18px;font-weight:800;color:#8b00a8;margin-bottom:14px;text-align:center}
+.bszs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.bsz{background:#f8f0ff;border:2px solid #e0c0f0;border-radius:10px;padding:14px 6px;cursor:pointer;text-align:center}
+.bsz.sel{background:#8b00a8;border-color:#8b00a8}
+.bsz.sel .bs,.bsz.sel .bp{color:#fff}
+.bs{font-size:22px;font-weight:800;color:#8b00a8}
+.bp{font-size:12px;color:#c2006e;margin-top:2px;font-weight:700}
+.ing-t{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin-bottom:8px}
+.ings{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.ing{padding:8px 14px;border-radius:18px;border:1.5px solid #e0c0f0;background:#f0fff0;cursor:pointer;font-size:13px;font-weight:600;color:#007a35}
+.ing.rm{background:#fff0f0;border-color:#ffaaaa;color:#ccc;text-decoration:line-through}
+.sz-h{font-size:11px;color:#e06000;text-align:center;margin-bottom:8px;display:none;font-weight:600}
+.mbtns{display:flex;gap:8px}
+.mok{flex:1;padding:13px;border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;background:#8b00a8}
+.mno{flex:1;padding:13px;background:none;border:1.5px solid #ddd;border-radius:10px;color:#aaa;font-size:14px;cursor:pointer}
+.top-modal-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;max-height:55vh;overflow-y:auto}
+.tc{padding:10px;border-radius:8px;border:1.5px solid #f0e0f8;background:#fff;cursor:pointer}
+.tc:active{background:#f8f0ff;border-color:#c2006e}
+.tc-n{font-size:13px;font-weight:700;color:#333}
+.tc-p{font-size:11px;color:#c2006e;font-weight:700;margin-top:2px}
+.toast{position:fixed;top:65px;left:50%;transform:translateX(-50%);background:#007a35;color:#fff;padding:8px 20px;border-radius:18px;font-size:13px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;white-space:nowrap}
+.toast.show{opacity:1}
+
+#panel-gerir{
+  --ink:#4a1942; --ink-soft:#7a2f66; --accent:#c93c7c; --accent-dark:#8a1f5c;
+  --success:#2f8f5b; --success-bg:#e4f5ec; --warn-bg:#fbe7d6; --warn-ink:#8a5a1f;
+  --surface:#fffaf2; --border:#e7c9dd; --bg:#fff3e6;
+  background:var(--bg); color:var(--ink); font-family:'Nunito',system-ui,sans-serif; min-height:100vh;
+}
+#panel-gerir h1,#panel-gerir h2,#panel-gerir h3{ font-family:'Baloo 2','Nunito',cursive; }
+#panel-gerir .app{ max-width:560px; margin:0 auto; padding:18px 16px 40px; }
+#panel-gerir .config-banner{ background:#fff3cd;border:2px solid #e0a800;color:#5c4400;padding:12px 14px;border-radius:14px;font-size:.8rem;font-weight:700;line-height:1.5;margin-bottom:16px; }
+#panel-gerir header{ display:flex;align-items:center;justify-content:space-between;margin-bottom:16px; }
+#panel-gerir header h1{ font-size:1.4rem;margin:0; }
+#panel-gerir .status-card{ background:var(--surface);border:2px solid var(--accent);border-radius:18px;padding:16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px; }
+#panel-gerir .status-card .lab{ font-weight:800; }
+#panel-gerir .status-card .sub{ font-size:.75rem;color:var(--ink-soft); }
+#panel-gerir .switch{ position:relative;width:50px;height:28px;flex-shrink:0; }
+#panel-gerir .switch input{ opacity:0;width:0;height:0; }
+#panel-gerir .slider{ position:absolute;inset:0;background:#ddd;border-radius:999px;cursor:pointer;transition:.2s; }
+#panel-gerir .slider:before{ content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s; }
+#panel-gerir input:checked + .slider{ background:var(--success); }
+#panel-gerir input:checked + .slider:before{ transform:translateX(22px); }
+#panel-gerir .filters{ display:flex;gap:8px;margin-bottom:14px; }
+#panel-gerir .filters button{ flex:1;padding:9px;border-radius:12px;border:2px solid var(--border);background:#fff;font-family:'Baloo 2';font-weight:700;font-size:.85rem;color:var(--ink-soft);cursor:pointer; }
+#panel-gerir .filters button.active{ background:var(--ink);color:#fff8ee;border-color:var(--ink); }
+#panel-gerir .order-card{ background:var(--surface);border:2px solid var(--border);border-radius:18px;padding:14px 16px;margin-bottom:12px; }
+#panel-gerir .order-card.unpaid{ border-color:var(--warn-ink); }
+#panel-gerir .order-card .top{ display:flex;justify-content:space-between;align-items:center; }
+#panel-gerir .order-card .code{ font-family:'Baloo 2';font-weight:700;font-size:1.05rem; }
+#panel-gerir .order-card .when{ font-size:.7rem;color:var(--ink-soft);font-weight:700; }
+#panel-gerir .badge-row{ display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px; }
+#panel-gerir .badge{ font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:999px; }
+#panel-gerir .badge.paid{ background:var(--success-bg);color:var(--success); }
+#panel-gerir .badge.unpaid{ background:var(--warn-bg);color:var(--warn-ink); }
+#panel-gerir .badge.fulfil{ background:#eee0f0;color:var(--ink-soft); }
+#panel-gerir .badge.status{ background:#f1e3ea;color:var(--ink); }
+#panel-gerir .items{ font-size:.82rem;color:var(--ink-soft);line-height:1.5;margin-bottom:8px; }
+#panel-gerir .items b{ color:var(--ink); }
+#panel-gerir .contact{ font-size:.8rem;color:var(--ink-soft);margin-bottom:10px; }
+#panel-gerir .notes{ font-size:.78rem;font-style:italic;color:var(--ink-soft);margin-bottom:10px; }
+#panel-gerir .actions{ display:flex;gap:8px;flex-wrap:wrap; }
+#panel-gerir .actions button{ flex:1;min-width:120px;padding:10px;border:none;border-radius:12px;font-family:'Baloo 2';font-weight:700;font-size:.82rem;cursor:pointer; }
+#panel-gerir .btn-confirm{ background:var(--warn-ink);color:#fff; }
+#panel-gerir .btn-advance{ background:var(--accent);color:#fff; }
+#panel-gerir .btn-advance:disabled{ background:#ddd;color:#999;cursor:not-allowed; }
+#panel-gerir .empty-note{ text-align:center;padding:40px 10px;color:var(--ink-soft);font-weight:700; }
+#panel-gerir .total{ font-family:'Baloo 2';font-weight:700;font-size:1.05rem;margin-bottom:8px; }
+</style>
+</head>
+<body>
+
+<div class="tabbar">
+  <button class="tabbtn active" data-tab="novo">🆕 Novo Pedido</button>
+  <button class="tabbtn" data-tab="gerir">📋 Estado dos Pedidos</button>
+</div>
+
+<div id="panel-novo" class="panel active">
+
+<header>
+  <div>
+    <div class="h-title">🍇 Okashi — Vendedor</div>
+    <div class="h-status" id="hst">A ligar...</div>
+  </div>
+  <div class="h-btns">
+    <button class="h-icon-btn" onclick="abrirInicioDia()" title="Início do dia">🌅</button>
+    <button class="h-icon-btn" onclick="abrirFechoDia()" title="Fecho do dia">🌙</button>
+    <div class="h-num" id="hnum">#1</div>
+  </div>
+</header>
+
+<div class="sec">🥣 Bowls</div>
+<div class="scroll-x">
+  <div class="bc" onclick="openBowl('Bowl Classica',9,10,12,['Banana','Morango','Leite em po','Granola','Leite condensado'])"><div class="bc-name">Clássica</div><div class="bc-price">S€9·M€10·L€12</div></div>
+  <div class="bc" onclick="openBowl('Bowl Superfood',9,10,12,['Morango','Coco laminado','Linhaca','Granola','Mel'])"><div class="bc-name">Superfood</div><div class="bc-price">S€9·M€10·L€12</div></div>
+  <div class="bc" onclick="openBowl('Bowl Fitness',9,10,12,['Banana','Aveia','Leite em po','Granola','Manteiga amendoim'])"><div class="bc-name">Fitness</div><div class="bc-price">S€9·M€10·L€12</div></div>
+  <div class="bc" onclick="openBowl('Bowl Tropical',9,10,12,['Kiwi','Banana','Morango','Coco laminado','Granola'])"><div class="bc-name">Tropical</div><div class="bc-price">S€9·M€10·L€12</div></div>
+</div>
+
+<div class="sec" style="color:#1a5a8a">🍇 Só açaí</div>
+<div class="sz-grid">
+  <div class="sz sz-sa" onclick="addAcai('So Acai S',9)"><div class="sz-l">S</div><div class="sz-p">€9</div></div>
+  <div class="sz sz-sa" onclick="addAcai('So Acai M',10)"><div class="sz-l">M</div><div class="sz-p">€10</div></div>
+  <div class="sz sz-sa" onclick="addAcai('So Acai L',12)"><div class="sz-l">L</div><div class="sz-p">€12</div></div>
+</div>
+
+<div class="sec">✨ Faz o teu açaí</div>
+<div class="sz-grid">
+  <div class="sz" onclick="addAcai('Acai S',10)"><div class="sz-l">S</div><div class="sz-p">€10</div></div>
+  <div class="sz" onclick="addAcai('Acai M',11)"><div class="sz-l">M</div><div class="sz-p">€11</div></div>
+  <div class="sz" onclick="addAcai('Acai L',14)"><div class="sz-l">L</div><div class="sz-p">€14</div></div>
+</div>
+
+<div class="sec">🍓 Frutas</div>
+<div class="top-grid">
+  <div class="top" onclick="addItem('+ Morango',0)"><div class="top-n">Morango</div></div>
+  <div class="top" onclick="addItem('+ Banana',0)"><div class="top-n">Banana</div></div>
+  <div class="top" onclick="addItem('+ Kiwi',0)"><div class="top-n">Kiwi</div></div>
+</div>
+
+<div class="sec">🥜 Sólidos</div>
+<div class="top-grid">
+  <div class="top" onclick="addItem('+ Granola',0)"><div class="top-n">Granola</div></div>
+  <div class="top" onclick="addItem('+ Aveia',0)"><div class="top-n">Aveia</div></div>
+  <div class="top" onclick="addItem('+ Coco laminado',0)"><div class="top-n">Coco laminado</div></div>
+  <div class="top" onclick="addItem('+ Leite em po',0)"><div class="top-n">Leite em pó</div></div>
+</div>
+
+<div class="sec">🍯 Líquidos</div>
+<div class="top-grid">
+  <div class="top" onclick="addItem('+ Mel',0)"><div class="top-n">Mel</div></div>
+  <div class="top" onclick="addItem('+ Manteiga amendoim',0)"><div class="top-n">Manteiga amendoim</div></div>
+  <div class="top" onclick="addItem('+ Leite condensado',0)"><div class="top-n">Leite condensado</div></div>
+</div>
+
+<div class="sec">⭐ Extras</div>
+<div class="top-grid">
+  <div class="top" onclick="addItem('+ Pacoca',1)"><div class="top-n">Paçoca</div><div class="top-p">+€1</div></div>
+  <div class="top" onclick="addItem('+ Nutella',2)"><div class="top-n">Nutella</div><div class="top-p">+€2</div></div>
+  <div class="top" onclick="addItem('+ Whey',2)"><div class="top-n">Whey</div><div class="top-p">+€2</div></div>
+  <div class="top" onclick="addItem('+ Franui',1.5)"><div class="top-n">Franui</div><div class="top-p">+€1.50</div></div>
+  <div class="top" style="border-color:#ffd700;background:#fffdf0" onclick="abrirTopExtra()"><div class="top-n" style="color:#cc8800">Topping extra</div><div class="top-p">+€0.50</div></div>
+</div>
+
+<div class="sec">📟 Pager</div>
+<div class="opts">
+  <input class="field-in" id="pager" type="number" min="1" max="16" placeholder="Número do pager (1-16)" inputmode="numeric">
+</div>
+
+<div class="sec">🏷️ Desconto</div>
+<div class="opts">
+  <div class="btn-row">
+    <button class="opt-btn on" id="dn" onclick="setDesc('none',this)">Nenhum</button>
+    <button class="opt-btn" id="d10" onclick="setDesc('10pct',this)">10%</button>
+    <button class="opt-btn" id="db" onclick="setDesc('bar',this)">Bar −€1</button>
+  </div>
+</div>
+
+<div class="sec">💳 Pagamento</div>
+<div class="opts">
+  <div class="btn-row">
+    <button class="pay-btn" id="pmb" onclick="setPag('Multibanco',this)">MB</button>
+    <button class="pay-btn" id="pdin" onclick="setPag('Dinheiro',this)">💵</button>
+    <button class="pay-btn" id="pmbw" onclick="setPag('MBWay',this)">MBWay</button>
+  </div>
+</div>
+
+<div class="sec">📋 Opções</div>
+<div class="opts">
+  <textarea class="field-in" id="notas" rows="2" placeholder="📝 Notas..."></textarea>
+  <button class="praia-btn" id="btnpraia" onclick="togglePraia()">🏖️ Pedido na praia</button>
+  <div id="praiaextra" style="display:none">
+    <input class="field-in" id="nomecliente" type="text" placeholder="📱 Nome ou nº do cliente">
+  </div>
+</div>
+
+<div style="height:16px"></div>
+
+<div class="bar">
+  <div class="bar-items" id="baritems"><div class="bar-empty">Adiciona itens ao pedido</div></div>
+  <div class="bar-foot">
+    <span class="bar-total" id="total">€0</span>
+    <button class="btn-trash" onclick="limpar()">🗑️</button>
+    <button class="btn-send" id="btnsend" disabled onclick="enviar()">Enviar ✓</button>
+  </div>
+</div>
+
+<div class="pronto" id="pronto">
+  <div class="pronto-em">✅</div>
+  <div class="pronto-t">Pedido pronto!</div>
+  <div class="pronto-s" id="prontosub">O teu pedido está pronto!</div>
+  <button class="pronto-ok" onclick="document.getElementById('pronto').classList.remove('show')">OK 🍇</button>
+</div>
+
+<div class="modal" id="mbowl" onclick="closeM('mbowl',event)">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <h2 id="bowlt">Bowl</h2>
+    <div class="bszs" id="bszs"></div>
+    <div class="sz-h" id="szh">Escolhe um tamanho!</div>
+    <div class="ing-t">Toca para remover</div>
+    <div class="ings" id="ings"></div>
+    <div class="mbtns">
+      <button class="mno" onclick="closeM('mbowl')">Cancelar</button>
+      <button class="mok" onclick="confirmBowl()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="mtop" onclick="closeM('mtop',event)">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <h2 style="color:#cc8800">⭐ Topping extra</h2>
+    <div class="top-modal-list">
+      <div class="tc" onclick="addTopExtra('Morango',0.5)"><div class="tc-n">🍓 Morango</div><div class="tc-p">+€0.50</div></div>
+      <div class="tc" onclick="addTopExtra('Banana',0.5)"><div class="tc-n">🍌 Banana</div><div class="tc-p">+€0.50</div></div>
+      <div class="tc" onclick="addTopExtra('Kiwi',0.5)"><div class="tc-n">🥝 Kiwi</div><div class="tc-p">+€0.50</div></div>
+      <div class="tc" onclick="addTopExtra('Granola',0.5)"><div class="tc-n">🌾 Granola</div><div class="tc-p">+€0.50</div></div>
+      <div class="tc" onclick="addTopExtra('Aveia',0.5)"><div class="tc-n">Aveia</div><div class="tc-p">+€0.50</div></div>
+      <div class="tc" onclick="addTopExtra('Coco laminado',0.5)"><div class="tc-n">🥥 Coco</div><div class="tc-p">+€0.50</div></div>
+      <div class="tc" onclick="addTopExtra('Leite em po',0.5)"><div class="tc-n">Leite em pó</div><div class="tc-p">+€0.50</div></div>
+      <div class="tc" onclick="addTopExtra('Mel',0.5)"><div class="tc-n">🍯 Mel</div><div class="tc-p">+€0.50</div></div>
+      <div class="tc" onclick="addTopExtra('Manteiga amendoim',0.5)"><div class="tc-n">🥜 Manteiga</div><div class="tc-p">+€0.50</div></div>
+      <div class="tc" onclick="addTopExtra('Leite condensado',0.5)"><div class="tc-n">Leite condensado</div><div class="tc-p">+€0.50</div></div>
+      <div class="tc" onclick="addTopExtra('Franui',1.5)"><div class="tc-n">Franui</div><div class="tc-p">+€1.50</div></div>
+      <div class="tc" onclick="addTopExtra('Pacoca',1)"><div class="tc-n">Paçoca</div><div class="tc-p">+€1.00</div></div>
+      <div class="tc" onclick="addTopExtra('Nutella',2)"><div class="tc-n">Nutella</div><div class="tc-p">+€2.00</div></div>
+      <div class="tc" onclick="addTopExtra('Whey',2)"><div class="tc-n">Whey</div><div class="tc-p">+€2.00</div></div>
+    </div>
+    <button class="mno" style="width:100%" onclick="closeM('mtop')">Cancelar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal" id="minicio" onclick="closeM('minicio',event)">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <h2>🌅 Início do dia</h2>
+    <p style="font-size:13px;color:#888;text-align:center;margin-bottom:14px">O contador de pedidos volta ao #1. Quem está a abrir?</p>
+    <input class="field-in" id="nome-inicio" type="text" placeholder="Nome do colaborador" style="margin-bottom:14px">
+    <div class="mbtns">
+      <button class="mno" onclick="closeM('minicio')">Cancelar</button>
+      <button class="mok" onclick="confirmarInicioDia()">Começar dia</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="mfecho" onclick="closeM('mfecho',event)">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <h2>🌙 Fecho do dia</h2>
+    <p style="font-size:13px;color:#888;text-align:center;margin-bottom:14px">Quem está a fechar?</p>
+    <input class="field-in" id="nome-fecho" type="text" placeholder="Nome do colaborador" style="margin-bottom:14px">
+    <div class="mbtns">
+      <button class="mno" onclick="closeM('mfecho')">Cancelar</button>
+      <button class="mok" onclick="confirmarFechoDia()">Fechar dia</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="panel-gerir" class="panel">
+  <div class="app" id="app"></div>
+</div>
+
+<script>
+const AIRTABLE_BASE_ID = 'app1DlNHDekbP5asp';
+const AIRTABLE_TOKEN   = 'patxsjHccHr0MqzD4.3c2af2923a6de35efe015937845b6ab4b9d59d81c561c18cb9cc7eb472cdc0bd';
+const ORDERS_TABLE     = 'tblQU3C1h4D8mxuqA';
+const STATUS_TABLE     = 'tbldnchjiIOTSUi5t';
+const TABLE_DIA        = 'tblz8yf4uJTIoLj95';             // tabela "Registo do Dia" — a mesma que a caixa usa
+const FP = 'fldTYaDYtS1PjIYjj', FO = 'fldwo12QNCHgPmd1R', FT = 'fldWju4PvnQaAGeps';
+
+const CONFIG_OK = !AIRTABLE_BASE_ID.startsWith('COLOCA_AQUI') && !AIRTABLE_TOKEN.startsWith('COLOCA_AQUI');
+
+document.querySelectorAll('.tabbtn').forEach(b=> b.onclick = ()=>{
+  document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  document.getElementById('panel-'+b.dataset.tab).classList.add('active');
+});
+
+let items=[],bowlData={},praia=false,desconto='none',pagamento='';
+let pedidoN=parseInt(localStorage.getItem('ok_v_n')||'1');
+let meusPedidos=JSON.parse(localStorage.getItem('ok_v_p')||'[]');
+let prontosMostrados=JSON.parse(localStorage.getItem('ok_v_pr')||'[]');
+
+function updateN(){document.getElementById('hnum').textContent='#'+pedidoN;}
+updateN();
+
+function contarAcais(){return items.filter(i=>i.acai).length;}
+
+function addAcai(name,price){
+  const n=contarAcais()+1;
+  items.push({name,price,acai:true,num:n});
+  renderNovo();showToast('✓ '+name);
+}
+function addItem(name,price){items.push({name,price,acai:false});renderNovo();showToast('✓ '+name.replace(/^\+ /,''));}
+function abrirTopExtra(){document.getElementById('mtop').classList.add('show');}
+function addTopExtra(nome,preco){items.push({name:'+ Topping extra ('+nome+')',price:preco,acai:false});closeM('mtop');renderNovo();}
+
+function setDesc(t,btn){
+  desconto=t;
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderNovo();
+}
+function setPag(t,btn){
+  pagamento=t;
+  document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+function togglePraia(){
+  praia=!praia;
+  document.getElementById('btnpraia').classList.toggle('on',praia);
+  document.getElementById('praiaextra').style.display=praia?'block':'none';
+  if(!praia)document.getElementById('nomecliente').value='';
+}
+
+function openBowl(name,s,m,l,ings){
+  bowlData={name,s,m,l,ings,size:null,removed:[]};
+  document.getElementById('bowlt').textContent=name;
+  document.getElementById('szh').style.display='none';
+  document.getElementById('bszs').innerHTML=[['S',s],['M',m],['L',l]].map(([sz,pr])=>
+    `<div class="bsz" id="bsz${sz}" onclick="selSz('${sz}',${pr})"><div class="bs">${sz}</div><div class="bp">€${pr}</div></div>`).join('');
+  document.getElementById('ings').innerHTML=ings.map(ing=>
+    `<div class="ing" id="ing${ing.replace(/\s/g,'_')}" onclick="togIng('${ing}')">${ing}</div>`).join('');
+  document.getElementById('mbowl').classList.add('show');
+}
+function selSz(sz,pr){bowlData.size={sz,pr};document.querySelectorAll('.bsz').forEach(e=>e.classList.remove('sel'));document.getElementById('bsz'+sz).classList.add('sel');document.getElementById('szh').style.display='none';}
+function togIng(ing){const el=document.getElementById('ing'+ing.replace(/\s/g,'_'));if(bowlData.removed.includes(ing)){bowlData.removed=bowlData.removed.filter(x=>x!==ing);el.classList.remove('rm');}else{bowlData.removed.push(ing);el.classList.add('rm');}}
+function confirmBowl(){
+  if(!bowlData.size){document.getElementById('szh').style.display='block';return;}
+  const n=contarAcais()+1;
+  let name=bowlData.name+' '+bowlData.size.sz;
+  if(bowlData.removed.length)name+=' (sem '+bowlData.removed.join(', ')+')';
+  items.push({name,price:bowlData.size.pr,acai:true,num:n});
+  closeM('mbowl');renderNovo();
+}
+function closeM(id,e){if(!e||e.target===document.getElementById(id))document.getElementById(id).classList.remove('show');}
+function removeItem(i){items.splice(i,1);let n=1;items.forEach(it=>{if(it.acai)it.num=n++;});renderNovo();}
+
+function calcTotal(){
+  const base=items.reduce((s,i)=>s+i.price,0);
+  if(desconto==='10pct')return+(base*.9).toFixed(2);
+  if(desconto==='bar')return+(Math.max(0,base-1)).toFixed(2);
+  return base;
+}
+
+function abrirInicioDia(){ document.getElementById('minicio').classList.add('show'); }
+function abrirFechoDia(){ document.getElementById('mfecho').classList.add('show'); }
+
+async function registarDia(tipo, nome, notas){
+  const agora = new Date();
+  try{
+    await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${TABLE_DIA}`,{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+AIRTABLE_TOKEN,'Content-Type':'application/json'},
+      body:JSON.stringify({fields:{
+        fldFCTwL0co6SP7Ld: agora.toISOString().slice(0,10),
+        fldzh61MXntq5BXtq: tipo,
+        fldGswl6Zq7bW126V: agora.toISOString(),
+        fld47iVHyBXjgIPmF: nome,
+        fld4PELi6IpWv0yUZ: notas || '',
+      }})
+    });
+  }catch(e){ console.log(e); }
+}
+
+async function confirmarInicioDia(){
+  const nome = document.getElementById('nome-inicio').value.trim() || 'Desconhecido';
+  // Recomeça tudo: contador ao #1, e o histórico local (pedidos próprios / alertas de "pronto")
+  pedidoN = 1; localStorage.setItem('ok_v_n', pedidoN); updateN();
+  meusPedidos = []; localStorage.setItem('ok_v_p', JSON.stringify(meusPedidos));
+  prontosMostrados = []; localStorage.setItem('ok_v_pr', JSON.stringify(prontosMostrados));
+  closeM('minicio');
+  document.getElementById('nome-inicio').value = '';
+  showToast('🌅 Dia iniciado — ' + nome);
+  await registarDia('Inicio do dia', nome, '');
+  refreshOrders();
+}
+
+async function confirmarFechoDia(){
+  const nome = document.getElementById('nome-fecho').value.trim() || 'Desconhecido';
+  closeM('mfecho');
+  document.getElementById('nome-fecho').value = '';
+  showToast('🌙 Dia fechado — ' + nome);
+  await registarDia('Fecho do dia', nome, 'Ultimo pedido: #'+(pedidoN-1));
+}
+
+function limpar(){
+  items=[];praia=false;desconto='none';pagamento='';
+  document.getElementById('notas').value='';
+  document.getElementById('pager').value='';
+  document.getElementById('nomecliente').value='';
+  document.getElementById('btnpraia').classList.remove('on');
+  document.getElementById('praiaextra').style.display='none';
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('dn').classList.add('on');
+  document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('on'));
+  renderNovo();
+}
+
+function renderNovo(){
+  const total=calcTotal();
+  document.getElementById('total').textContent='€'+total.toFixed(2).replace('.00','');
+  document.getElementById('btnsend').disabled=items.length===0;
+  const el=document.getElementById('baritems');
+  if(!items.length){el.innerHTML='<div class="bar-empty">Adiciona itens ao pedido</div>';return;}
+  el.innerHTML=items.map((it,i)=>`
+    <div class="bi">
+      <span class="bi-n ${it.acai?'acai':''}">${it.acai?'#'+it.num+' ':''}${it.name}</span>
+      ${it.price>0?`<span class="bi-p">€${it.price.toFixed(2)}</span>`:''}
+      <button class="bi-rm" onclick="removeItem(${i})">×</button>
+    </div>`).join('');
+}
+
+async function enviar(){
+  const btn=document.getElementById('btnsend');
+  btn.disabled=true;btn.textContent='A enviar...';
+  const notas=document.getElementById('notas').value;
+  const pager=document.getElementById('pager').value.trim();
+  const nomeCliente=document.getElementById('nomecliente').value.trim();
+  const total=calcTotal();
+  const itens=items.map(i=>{
+    const nm=i.acai?`#${i.num} ${i.name}`:i.name;
+    return i.price>0?`${nm} (+€${i.price.toFixed(2)})`:nm;
+  }).join('\n');
+  const descLabel=desconto==='10pct'?'Desconto: -10%':desconto==='bar'?'Desconto: -€1 Bar':'';
+  const notaFinal=[notas,pager?'📟 Pager #'+pager:'',descLabel,pagamento?'Pagamento: '+pagamento:'',praia?'🏖️ PRAIA':''].filter(Boolean).join(' | ');
+  try{
+    const fields={NumeroPedido:'Pedido #'+pedidoN,Itens:itens,Total:total,Estado:'Novo',Notas:notaFinal,Hora:new Date().toISOString(),[FP]:praia};
+    if(praia&&nomeCliente){fields[FO]='Praia';fields[FT]=nomeCliente;}
+    const r=await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${ORDERS_TABLE}`,{method:'POST',headers:{'Authorization':'Bearer '+AIRTABLE_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({fields})});
+    if(r.ok){
+      const data=await r.json();
+      if(data.id){
+        meusPedidos.push({id:data.id,num:'Pedido #'+pedidoN});
+        localStorage.setItem('ok_v_p',JSON.stringify(meusPedidos));
+      }
+      showToast('✅ Pedido #'+pedidoN+' enviado!');
+      document.getElementById('hst').textContent='✅ Pedido #'+pedidoN+' enviado';
+      pedidoN++;localStorage.setItem('ok_v_n',pedidoN);updateN();limpar();
+      refreshOrders();
+    }else{
+      document.getElementById('hst').textContent='❌ Erro ao enviar';
+      alert('Erro ao enviar');
+    }
+  }catch(e){document.getElementById('hst').textContent='❌ Sem ligação';alert('Sem ligação');}
+  btn.disabled=false;btn.textContent='Enviar ✓';
+}
+
+async function verificarProntos(){
+  const pendentes=meusPedidos.filter(p=>!prontosMostrados.includes(p.id));
+  if(!pendentes.length)return;
+  try{
+    const ids=pendentes.map(p=>`records[]=${p.id}`).join('&');
+    const r=await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${ORDERS_TABLE}?${ids}`,{headers:{Authorization:'Bearer '+AIRTABLE_TOKEN}});
+    if(!r.ok)return;
+    const data=await r.json();
+    const prontos=(data.records||[]).filter(rec=>{const e=rec.fields.Estado;return(typeof e==='string'?e:(e?.name||''))==='Pronto';});
+    if(prontos.length){
+      prontos.forEach(p=>prontosMostrados.push(p.id));
+      localStorage.setItem('ok_v_pr',JSON.stringify(prontosMostrados));
+      const info=meusPedidos.find(p=>p.id===prontos[0].id);
+      document.getElementById('prontosub').textContent=(info?info.num:'O pedido')+' está pronto!';
+      document.getElementById('pronto').classList.add('show');
+      try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[880,1047,1319,1047,1319].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sine';o.frequency.value=f;const t=ctx.currentTime+i*.2;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.5,t+.05);g.gain.linearRampToValueAtTime(0,t+.18);o.start(t);o.stop(t+.2);});}catch(e){}
+    }
+  }catch(e){}
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500);}
+
+fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${ORDERS_TABLE}?maxRecords=1`,{headers:{Authorization:'Bearer '+AIRTABLE_TOKEN}})
+  .then(r=>document.getElementById('hst').textContent=r.ok?'✅ Ligado':'❌ Erro')
+  .catch(()=>document.getElementById('hst').textContent='❌ Sem ligação');
+
+setInterval(verificarProntos,10000);
+renderNovo();
+
+const STATUS_LABELS_PT = {received:'Recebido', preparing:'Em preparação', ready:'Pronto', completed:'Entregue'};
+const STATUS_FROM_AIRTABLE = {Novo:'received', 'Em preparacao':'preparing', Pronto:'ready'};
+function estadoTexto(f){ const e=f['Estado']; if(!e) return ''; return typeof e==='string'?e:(e.name||''); }
+function isPaid(notas){ return /Pagamento:/i.test(notas||''); }
+function isDelivered(notas){ return /\bEntregue\b/i.test(notas||''); }
+
+let vendorOnline = false;
+let vendorStatusRecordId = null;
+let orders = [];
+let filter = 'active';
+let lastLocalToggleAt = 0;
+let togglingNow = false;
+
+async function airtableFetch(table, method, pathAndQuery, body){
+  const url = 'https://api.airtable.com/v0/' + AIRTABLE_BASE_ID + '/' + encodeURIComponent(table) + (pathAndQuery||'');
+  const res = await fetch(url, {
+    method: method || 'GET',
+    headers: { 'Authorization':'Bearer ' + AIRTABLE_TOKEN, 'Content-Type':'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if(!res.ok){ const txt = await res.text(); throw new Error('Airtable '+res.status+': '+txt); }
+  return res.json();
+}
+
+function decodeOrder(record){
+  const f = record.fields || {};
+  const notas = f['Notas'] || '';
+  const paid = isPaid(notas);
+  const estado = estadoTexto(f);
+  const status = isDelivered(notas) ? 'completed' : (STATUS_FROM_AIRTABLE[estado] || 'received');
+  return {
+    recordId: record.id,
+    id: f['NumeroPedido'] || '',
+    createdAt: f['Hora'] ? Date.parse(f['Hora']) : Date.now(),
+    status,
+    paid,
+    fulfillment: f['PedidoPraia'] ? 'beach' : 'pickup',
+    beachZone: f['PedidoPraia'] ? (f['OndeEntregar'] || '') : '',
+    customerPhone: f['Telemovel'] || '',
+    notes: notas,
+    itemsText: f['Itens'] || '',
+    total: f['Total'] || 0,
+  };
+}
+
+function eHoje(createdAt){
+  const hoje = new Date().toLocaleDateString('pt-PT',{timeZone:'Europe/Lisbon'});
+  return new Date(createdAt).toLocaleDateString('pt-PT',{timeZone:'Europe/Lisbon'}) === hoje;
+}
+function statusLabel(o){
+  if(o.status==='received') return o.paid ? 'Recebido' : 'A aguardar pagamento';
+  return STATUS_LABELS_PT[o.status];
+}
+function fmt(n){ return '€' + n.toFixed(2).replace('.', ','); }
+
+async function refreshVendorStatus(){
+  if(!CONFIG_OK) return;
+  if(togglingNow || Date.now() - lastLocalToggleAt < 4000) return;
+  try{
+    const data = await airtableFetch(STATUS_TABLE, 'GET', '?maxRecords=1');
+    if(data.records && data.records.length>0){
+      vendorOnline = !!data.records[0].fields['LojaOnlinePraia'];
+      vendorStatusRecordId = data.records[0].id;
+    } else {
+      vendorOnline = false; vendorStatusRecordId = null;
+    }
+  }catch(e){ console.error('vendor status fetch failed', e); }
+}
+
+async function refreshOrders(){
+  if(!CONFIG_OK) return;
+  try{
+    const params = new URLSearchParams({ 'sort[0][field]':'Hora', 'sort[0][direction]':'desc', 'maxRecords':'80' });
+    const data = await airtableFetch(ORDERS_TABLE, 'GET', '?' + params.toString());
+    orders = (data.records || []).map(decodeOrder);
+  }catch(e){ console.error('orders fetch failed', e); }
+}
+
+async function toggleVendorOnline(){
+  togglingNow = true;
+  const newValue = !vendorOnline;
+  vendorOnline = newValue;
+  lastLocalToggleAt = Date.now();
+  renderGerir();
+  try{
+    if(vendorStatusRecordId){
+      await airtableFetch(STATUS_TABLE, 'PATCH', '/' + vendorStatusRecordId, { fields:{ LojaOnlinePraia:newValue } });
+    } else {
+      const created = await airtableFetch(STATUS_TABLE, 'POST', '', { records:[{ fields:{ LojaOnlinePraia:newValue } }] });
+      vendorStatusRecordId = created.records[0].id;
+    }
+  }catch(e){
+    console.error(e);
+    vendorOnline = !newValue;
+    alert('Não foi possível atualizar o estado. Verifica a ligação/Airtable e tenta novamente.');
+  }
+  togglingNow = false;
+  lastLocalToggleAt = Date.now();
+  renderGerir();
+}
+
+async function confirmPayment(recordId, metodo){
+  const order = orders.find(o=>o.recordId===recordId);
+  if(!order) return;
+  const novaNotas = [order.notes, 'Pagamento: ' + metodo].filter(Boolean).join(' | ');
+  try{
+    await airtableFetch(ORDERS_TABLE, 'PATCH', '/' + recordId, { fields:{ Notas: novaNotas } });
+    await refreshOrders(); renderGerir();
+  }catch(e){ console.error(e); alert('Erro ao confirmar pagamento.'); }
+}
+
+async function markDelivered(recordId){
+  const order = orders.find(o=>o.recordId===recordId);
+  if(!order || order.status!=='ready' || !order.paid) return;
+  const novaNotas = [order.notes, 'Entregue'].filter(Boolean).join(' | ');
+  try{
+    await airtableFetch(ORDERS_TABLE, 'PATCH', '/' + recordId, { fields:{ Notas: novaNotas } });
+    await refreshOrders(); renderGerir();
+  }catch(e){ console.error(e); alert('Erro ao marcar como entregue.'); }
+}
+
+setInterval(async ()=>{ await refreshVendorStatus(); await refreshOrders(); renderGerir(); }, 5000);
+
+function renderGerir(){
+  const app = document.getElementById('app');
+
+  const meusIds = new Set(meusPedidos.map(p=>p.id));
+  const filtered = orders.filter(o => meusIds.has(o.recordId) && eHoje(o.createdAt) && (filter==='active' ? o.status!=='completed' : o.status==='completed'));
+
+  app.innerHTML = `
+    <header><h1>Estado dos meus pedidos</h1></header>
+    ${!CONFIG_OK ? `<div class="config-banner">⚠️ App ainda não ligada ao Airtable.</div>` : ''}
+    <div class="status-card">
+      <div><div class="lab">${vendorOnline?'Online — entrega na praia ativa':'Offline — só recolha no balcão'}</div><div class="sub">Controla se a entrega na praia aparece aos clientes</div></div>
+      <label class="switch"><input type="checkbox" id="vendorSwitch" ${vendorOnline?'checked':''}><span class="slider"></span></label>
+    </div>
+    <div class="filters">
+      <button class="${filter==='active'?'active':''}" data-filter="active">Ativos</button>
+      <button class="${filter==='done'?'active':''}" data-filter="done">Concluídos</button>
+    </div>
+    <div id="orderList"></div>
+  `;
+  const listEl = document.getElementById('orderList');
+  if(filtered.length===0){
+    listEl.innerHTML = `<div class="empty-note">Ainda não fizeste pedidos hoje neste telemóvel.</div>`;
+  } else {
+    listEl.innerHTML = filtered.map(o=>{
+      const when = new Date(o.createdAt).toLocaleString('pt-PT',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
+      const itemsHtml = (o.itemsText||'').split('\n').filter(Boolean).map(l=>{
+        return l.startsWith('+') ? '<div style="padding-left:10px;color:#888">'+l+'</div>' : '<div><b>'+l+'</b></div>';
+      }).join('');
+      const notasVisiveis = (o.notes||'').split(' | ').filter(p=>!/^Pagamento:/i.test(p) && p.trim()!=='Entregue').join(' | ');
+      return `<div class="order-card ${o.paid?'':'unpaid'}">
+        <div class="top"><span class="code">${o.id}</span><span class="when">${when}</span></div>
+        <div class="badge-row">
+          <span class="badge ${o.paid?'paid':'unpaid'}">${o.paid?'✓ Pago':'Pagamento pendente'}</span>
+          <span class="badge fulfil">${o.fulfillment==='beach' ? 'Praia — '+(o.beachZone||'?') : 'Balcão'}</span>
+          <span class="badge status">${statusLabel(o)}</span>
+        </div>
+        <div class="items">${itemsHtml}</div>
+        ${o.customerPhone ? '<div class="contact">📱 '+o.customerPhone+'</div>' : ''}
+        ${notasVisiveis ? '<div class="notes">"'+notasVisiveis+'"</div>' : ''}
+        <div class="total">${fmt(o.total)}</div>
+        <div class="actions">
+          ${!o.paid ? `
+            <button class="btn-confirm" data-pay="${o.recordId}|Multibanco">💳 Multibanco</button>
+            <button class="btn-confirm" data-pay="${o.recordId}|Dinheiro">💵 Dinheiro</button>
+            <button class="btn-confirm" data-pay="${o.recordId}|MBWay">📱 MBWay</button>
+            <button class="btn-confirm" data-pay="${o.recordId}|Online (SumUp)">🔗 Já pagou online</button>
+          ` : ''}
+          ${o.paid && o.status==='ready' ? `<button class="btn-advance" data-deliver="${o.recordId}">✅ Marcar como entregue</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('vendorSwitch').onchange = toggleVendorOnline;
+  document.querySelectorAll('[data-filter]').forEach(b=> b.onclick = ()=>{ filter=b.dataset.filter; renderGerir(); });
+  document.querySelectorAll('[data-pay]').forEach(b=> b.onclick = ()=>{ const [id,metodo]=b.dataset.pay.split('|'); confirmPayment(id,metodo); });
+  document.querySelectorAll('[data-deliver]').forEach(b=> b.onclick = ()=> markDelivered(b.dataset.deliver));
+}
+
+refreshVendorStatus().then(()=>{ refreshOrders().then(renderGerir); });
+</script>
+</body>
+</html>
