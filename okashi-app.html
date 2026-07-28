@@ -157,6 +157,8 @@ const STR = {
     placeOrder:"Continuar para pagamento", total:"Total",
     payTitle:"Pagamento", payDesc:"Podes pagar já com o link SumUp, ou escolher pagar na entrega/recolha. O teu pedido só segue para a cozinha depois de o pagamento ser confirmado.",
     payWithSumUp:"Pagar com SumUp", alreadyPaid:"Pagar na entrega",
+    howMuchPaid:"Já pagaste? Confirma quanto pagaste no SumUp:", confirmOnlinePaid:"Confirmar pagamento e enviar pedido",
+    orLabel:"ou",
     orderPlaced:"Pedido enviado!",
     noOrders:"Ainda não fizeste nenhum pedido. Vai ao menu e escolhe o teu açaí!",
     statusReceived:"Recebido", statusPreparing:"Em preparação",
@@ -190,6 +192,8 @@ const STR = {
     placeOrder:"Continue to payment", total:"Total",
     payTitle:"Payment", payDesc:"You can pay now via the SumUp link, or choose to pay on delivery/pickup. Your order only goes to the kitchen after payment is confirmed.",
     payWithSumUp:"Pay with SumUp", alreadyPaid:"Pay on delivery",
+    howMuchPaid:"Already paid? Confirm how much you paid on SumUp:", confirmOnlinePaid:"Confirm payment and send order",
+    orLabel:"or",
     orderPlaced:"Order sent!",
     noOrders:"No orders yet. Head to the menu and build your açaí!",
     statusReceived:"Received", statusPreparing:"Preparing",
@@ -392,13 +396,19 @@ function cartCount(){ return state.cart.reduce((s,c)=>s+c.qty,0); }
 function toggleMulti(arr,id){ const i=arr.indexOf(id); if(i>=0) arr.splice(i,1); else arr.push(id); }
 function sumupUrl(total){ return SUMUP_LINK + '?amount=' + total.toFixed(2) + '&currency=EUR'; }
 
-async function finalizeOrder(){
+async function finalizeOrder(payOpts){
+  payOpts = payOpts || { paidOnline:false };
   const id = 'QR' + Date.now().toString(36).toUpperCase().slice(-4);
   const notasParts = [];
   if(state.checkoutName.trim()) notasParts.push('Cliente: ' + state.checkoutName.trim());
   if(state.checkoutNotes.trim()) notasParts.push(state.checkoutNotes.trim());
   if(state.wantsInvoice) notasParts.push('Fatura NIF: ' + state.taxId.trim());
-  // Sem "Pagamento:" ainda — a cozinha mostra "NÃO PAGO" até o vendedor confirmar pagamento.
+  // Se o cliente diz que já pagou online, gravamos o valor que ele declara ter pago
+  // (o vendedor depois confere se bate certo com o Total do pedido).
+  // Se não, fica sem "Pagamento:" e a cozinha/vendedor mostram "NÃO PAGO" até ser cobrado.
+  if(payOpts.paidOnline){
+    notasParts.push('Pagamento: Online (SumUp) €' + payOpts.amount.toFixed(2));
+  }
   const fields = {
     'NumeroPedido': id,
     'Hora': new Date().toISOString(),
@@ -417,7 +427,7 @@ async function finalizeOrder(){
     toast(state.lang==='pt' ? 'Erro ao enviar pedido. Tenta novamente.' : 'Error sending order. Try again.');
     return;
   }
-  const orderData = { id, createdAt:Date.now(), status:'received', paid:false, fulfillment:state.fulfil, beachZone:state.beachZone, customerName:state.checkoutName, wantsInvoice:state.wantsInvoice, taxId:state.taxId, items:state.cart, total:cartTotal() };
+  const orderData = { id, createdAt:Date.now(), status:'received', paid:!!payOpts.paidOnline, fulfillment:state.fulfil, beachZone:state.beachZone, customerName:state.checkoutName, wantsInvoice:state.wantsInvoice, taxId:state.taxId, items:state.cart, total:cartTotal() };
   state.myOrders.unshift({id, data:orderData});
   lset('okashi-my-orders', JSON.stringify(state.myOrders.map(o=>o.id)));
   state.cart = []; persistCart();
@@ -601,12 +611,24 @@ function renderCartDrawer(){
       <p style="font-size:.85rem;color:var(--ink-soft);">${t('payDesc')}</p>
       <div class="total-row"><div class="lab">${t('total')}</div><div class="val">${fmt(cartTotal())}</div></div>
       <a class="primary-btn" href="${sumupUrl(cartTotal())}" target="_blank" rel="noopener">${t('payWithSumUp')}</a>
+      <div class="field" style="margin-top:10px">
+        <label>${t('howMuchPaid')}</label>
+        <input id="paidAmountInput" type="number" step="0.01" min="0" value="${cartTotal().toFixed(2)}">
+      </div>
+      <button class="primary-btn" id="confirmOnlinePaidBtn">${t('confirmOnlinePaid')}</button>
+      <div style="text-align:center;font-size:.8rem;color:var(--ink-soft);margin:10px 0">${t('orLabel')}</div>
       <button class="ghost-btn" id="confirmPaidBtn">${t('alreadyPaid')}</button>
     </div>`;
     document.getElementById('app').appendChild(ov);
     ov.querySelector('#closeCart').onclick = ()=>{ state.cartOpen=false; render(); };
     ov.addEventListener('click', e=>{ if(e.target===ov){ state.cartOpen=false; render(); } });
-    ov.querySelector('#confirmPaidBtn').onclick = finalizeOrder;
+    ov.querySelector('#confirmOnlinePaidBtn').onclick = ()=>{
+      const input = ov.querySelector('#paidAmountInput');
+      const amount = parseFloat(input.value);
+      if(isNaN(amount) || amount<=0){ input.focus(); return; }
+      finalizeOrder({ paidOnline:true, amount });
+    };
+    ov.querySelector('#confirmPaidBtn').onclick = ()=> finalizeOrder({ paidOnline:false });
     return;
   }
 

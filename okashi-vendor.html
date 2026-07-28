@@ -143,13 +143,31 @@ body{margin:0;font-family:system-ui,-apple-system,'Nunito',sans-serif;background
 #panel-gerir .btn-advance:disabled{ background:#ddd;color:#999;cursor:not-allowed; }
 #panel-gerir .empty-note{ text-align:center;padding:40px 10px;color:var(--ink-soft);font-weight:700; }
 #panel-gerir .total{ font-family:'Baloo 2';font-weight:700;font-size:1.05rem;margin-bottom:8px; }
+#panel-gerir .unpaid-alert{
+  background:#e03030; color:#fff; font-weight:800; font-size:.85rem;
+  padding:9px 12px; border-radius:12px; margin-bottom:8px; text-align:center;
+}
+#panel-gerir .pay-compare{
+  border-radius:12px; padding:10px 12px; margin-bottom:8px; font-size:.82rem; line-height:1.6;
+}
+#panel-gerir .pay-compare.match{ background:var(--success-bg); color:var(--success); }
+#panel-gerir .pay-compare.mismatch{ background:#fde0e0; color:#a01c1c; }
+#panel-gerir .pay-compare-flag{ font-weight:800; margin-top:2px; }
+#panel-gerir .new-order-banner{
+  background:#e03030; color:#fff; font-weight:800; font-size:.85rem;
+  padding:12px 14px; border-radius:14px; margin-bottom:14px; text-align:center;
+  cursor:pointer; animation:pulseAlert 1s infinite;
+}
+@keyframes pulseAlert{ 0%,100%{opacity:1;} 50%{opacity:.75;} }
+.tab-badge{ display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;
+  border-radius:9px;background:#fff;color:#c2006e;font-size:10px;font-weight:900;margin-left:4px;vertical-align:middle; }
 </style>
 </head>
 <body>
 
 <div class="tabbar">
   <button class="tabbtn active" data-tab="novo">🆕 Novo Pedido</button>
-  <button class="tabbtn" data-tab="gerir">📋 Estado dos Pedidos</button>
+  <button class="tabbtn" data-tab="gerir">📋 Estado dos Pedidos<span id="tabBadge"></span></button>
 </div>
 
 <div id="panel-novo" class="panel active">
@@ -577,6 +595,16 @@ async function airtableFetch(table, method, pathAndQuery, body){
   return res.json();
 }
 
+function paidOnlineAmount(notas){
+  const m = /Pagamento:\s*Online \(SumUp\)\s*€\s*([\d,.]+)/i.exec(notas||'');
+  if(!m) return null;
+  return parseFloat(m[1].replace(',', '.'));
+}
+function paymentMethod(notas){
+  const m = /Pagamento:\s*([^|]+)/i.exec(notas||'');
+  return m ? m[1].trim() : '';
+}
+
 function decodeOrder(record){
   const f = record.fields || {};
   const notas = f['Notas'] || '';
@@ -589,6 +617,9 @@ function decodeOrder(record){
     createdAt: f['Hora'] ? Date.parse(f['Hora']) : Date.now(),
     status,
     paid,
+    paidOnline: paid && /Online \(SumUp\)/i.test(notas),
+    paidAmount: paidOnlineAmount(notas),
+    paymentMethod: paid ? paymentMethod(notas) : '',
     fulfillment: f['PedidoPraia'] ? 'beach' : 'pickup',
     beachZone: f['PedidoPraia'] ? (f['OndeEntregar'] || '') : '',
     customerPhone: f['Telemovel'] || '',
@@ -622,12 +653,39 @@ async function refreshVendorStatus(){
   }catch(e){ console.error('vendor status fetch failed', e); }
 }
 
+let knownOrderIds = new Set();
+let firstOrdersLoad = true;
+let newOrderAlertCount = 0;
+
+function beepAlerta(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    [880,1047,1319,1047,1319].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination); o.type='sine'; o.frequency.value=f;
+      const t=ctx.currentTime+i*.18;
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.45,t+.03); g.gain.linearRampToValueAtTime(0,t+.16);
+      o.start(t); o.stop(t+.2);
+    });
+  }catch(e){}
+}
+
+function dismissNewOrderAlert(){ newOrderAlertCount = 0; renderGerir(); }
+
 async function refreshOrders(){
   if(!CONFIG_OK) return;
   try{
     const params = new URLSearchParams({ 'sort[0][field]':'Hora', 'sort[0][direction]':'desc', 'maxRecords':'80' });
     const data = await airtableFetch(ORDERS_TABLE, 'GET', '?' + params.toString());
-    orders = (data.records || []).map(decodeOrder);
+    const novos = (data.records || []).map(decodeOrder);
+    if(!firstOrdersLoad){
+      // Alerta só para pedidos novos vindos da app do cliente (QR) — os próprios já sabe que fez.
+      const chegaram = novos.filter(o => o.id.startsWith('QR') && !knownOrderIds.has(o.recordId));
+      if(chegaram.length){ newOrderAlertCount += chegaram.length; beepAlerta(); }
+    }
+    novos.forEach(o=>knownOrderIds.add(o.recordId));
+    firstOrdersLoad = false;
+    orders = novos;
   }catch(e){ console.error('orders fetch failed', e); }
 }
 
@@ -678,12 +736,21 @@ setInterval(async ()=>{ await refreshVendorStatus(); await refreshOrders(); rend
 
 function renderGerir(){
   const app = document.getElementById('app');
+  const badgeEl = document.getElementById('tabBadge');
+  if(badgeEl) badgeEl.innerHTML = newOrderAlertCount>0 ? `<span class="tab-badge">${newOrderAlertCount}</span>` : '';
 
   const meusIds = new Set(meusPedidos.map(p=>p.id));
-  const filtered = orders.filter(o => meusIds.has(o.recordId) && eHoje(o.createdAt) && (filter==='active' ? o.status!=='completed' : o.status==='completed'));
+  // Mostra os pedidos feitos neste telemóvel + TODOS os pedidos vindos da app do cliente (QR),
+  // porque é o vendedor quem entrega na praia. Não mostra os da caixa principal.
+  const filtered = orders.filter(o => (meusIds.has(o.recordId) || o.id.startsWith('QR')) && eHoje(o.createdAt) && (filter==='active' ? o.status!=='completed' : o.status==='completed'));
 
   app.innerHTML = `
     <header><h1>Estado dos meus pedidos</h1></header>
+    ${newOrderAlertCount>0 ? `
+      <div class="new-order-banner" onclick="dismissNewOrderAlert()">
+        🔔 ${newOrderAlertCount} novo${newOrderAlertCount>1?'s':''} pedido${newOrderAlertCount>1?'s':''} da app do cliente! <span style="text-decoration:underline">toca para fechar</span>
+      </div>
+    ` : ''}
     ${!CONFIG_OK ? `<div class="config-banner">⚠️ App ainda não ligada ao Airtable.</div>` : ''}
     <div class="status-card">
       <div><div class="lab">${vendorOnline?'Online — entrega na praia ativa':'Offline — só recolha no balcão'}</div><div class="sub">Controla se a entrega na praia aparece aos clientes</div></div>
@@ -705,24 +772,36 @@ function renderGerir(){
         return l.startsWith('+') ? '<div style="padding-left:10px;color:#888">'+l+'</div>' : '<div><b>'+l+'</b></div>';
       }).join('');
       const notasVisiveis = (o.notes||'').split(' | ').filter(p=>!/^Pagamento:/i.test(p) && p.trim()!=='Entregue').join(' | ');
+      const amountMismatch = o.paidOnline && o.paidAmount!==null && Math.abs(o.paidAmount - o.total) > 0.01;
+      let paymentBlock;
+      if(o.paidOnline){
+        paymentBlock = `<div class="pay-compare ${amountMismatch?'mismatch':'match'}">
+          <div>Total do pedido: <b>${fmt(o.total)}</b></div>
+          <div>Cliente pagou (SumUp): <b>${o.paidAmount!==null?fmt(o.paidAmount):'?'}</b></div>
+          <div class="pay-compare-flag">${amountMismatch ? '⚠️ Valores não coincidem — confirma antes de entregar' : '✅ Valores coincidem'}</div>
+        </div>`;
+      } else if(o.paid){
+        paymentBlock = `<div class="badge paid">✓ Pago — ${o.paymentMethod||'confirmado'}</div>`;
+      } else {
+        paymentBlock = `<div class="unpaid-alert">🚨 NÃO PAGO — cobra antes de entregar</div>
+        <div class="actions">
+          <button class="btn-confirm" data-pay="${o.recordId}|Multibanco">💳 Multibanco</button>
+          <button class="btn-confirm" data-pay="${o.recordId}|Dinheiro">💵 Dinheiro</button>
+          <button class="btn-confirm" data-pay="${o.recordId}|MBWay">📱 MBWay</button>
+        </div>`;
+      }
       return `<div class="order-card ${o.paid?'':'unpaid'}">
         <div class="top"><span class="code">${o.id}</span><span class="when">${when}</span></div>
         <div class="badge-row">
-          <span class="badge ${o.paid?'paid':'unpaid'}">${o.paid?'✓ Pago':'Pagamento pendente'}</span>
           <span class="badge fulfil">${o.fulfillment==='beach' ? 'Praia — '+(o.beachZone||'?') : 'Balcão'}</span>
           <span class="badge status">${statusLabel(o)}</span>
         </div>
         <div class="items">${itemsHtml}</div>
         ${o.customerPhone ? '<div class="contact">📱 '+o.customerPhone+'</div>' : ''}
         ${notasVisiveis ? '<div class="notes">"'+notasVisiveis+'"</div>' : ''}
-        <div class="total">${fmt(o.total)}</div>
+        ${o.paidOnline ? '' : `<div class="total">${fmt(o.total)}</div>`}
+        ${paymentBlock}
         <div class="actions">
-          ${!o.paid ? `
-            <button class="btn-confirm" data-pay="${o.recordId}|Multibanco">💳 Multibanco</button>
-            <button class="btn-confirm" data-pay="${o.recordId}|Dinheiro">💵 Dinheiro</button>
-            <button class="btn-confirm" data-pay="${o.recordId}|MBWay">📱 MBWay</button>
-            <button class="btn-confirm" data-pay="${o.recordId}|Online (SumUp)">🔗 Já pagou online</button>
-          ` : ''}
           ${o.paid && o.status==='ready' ? `<button class="btn-advance" data-deliver="${o.recordId}">✅ Marcar como entregue</button>` : ''}
         </div>
       </div>`;
