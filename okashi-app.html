@@ -153,7 +153,7 @@ const STR = {
     pickup:"Recolha no balcão", pickupDesc:"Okashi Açaí — Areias da Telha",
     beach:"Entrega na praia", beachUnavailable:"Indisponível — vendedor offline",
     beachZoneLabel:"Zona da praia",
-    yourName:"O teu nome", yourPhone:"Telemóvel (opcional)", notes:"Notas (opcional)",
+    yourName:"O teu nome", yourPhone:"Telemóvel", notes:"Notas (opcional)",
     placeOrder:"Continuar para pagamento", total:"Total",
     payTitle:"Pagamento", payDesc:"Podes pagar já com o link SumUp, ou escolher pagar na entrega/recolha. O teu pedido só segue para a cozinha depois de o pagamento ser confirmado.",
     payWithSumUp:"Pagar com SumUp", alreadyPaid:"Pagar na entrega",
@@ -163,7 +163,7 @@ const STR = {
     statusReadyPickup:"Pronto para levantar", statusReadyBeach:"A caminho da praia",
     statusCompleted:"Entregue", awaitingPayment:"A aguardar confirmação do pagamento",
     vendorOnline:"Vendedor online", vendorOffline:"Vendedor offline",
-    remove:"Remover", nameRequired:"Indica o teu nome para continuar",
+    remove:"Remover", nameRequired:"Indica o teu nome para continuar", phoneRequired:"Indica o teu telemóvel para continuar",
     beachZoneRequired:"Escolhe a zona da praia",
     findOrder:"Já tens um código? Procura aqui", searchPlaceholder:"ex: OK4X9Z1", search:"Procurar",
     orderNotFound:"Pedido não encontrado", configWarning:"⚠️ App ainda não ligada ao Airtable. Preenche AIRTABLE_BASE_ID e AIRTABLE_TOKEN no topo do ficheiro.",
@@ -186,7 +186,7 @@ const STR = {
     pickup:"Counter pickup", pickupDesc:"Okashi Açaí — Areias da Telha",
     beach:"Beach delivery", beachUnavailable:"Unavailable — vendor offline",
     beachZoneLabel:"Beach zone",
-    yourName:"Your name", yourPhone:"Phone (optional)", notes:"Notes (optional)",
+    yourName:"Your name", yourPhone:"Phone number", notes:"Notes (optional)",
     placeOrder:"Continue to payment", total:"Total",
     payTitle:"Payment", payDesc:"You can pay now via the SumUp link, or choose to pay on delivery/pickup. Your order only goes to the kitchen after payment is confirmed.",
     payWithSumUp:"Pay with SumUp", alreadyPaid:"Pay on delivery",
@@ -196,7 +196,7 @@ const STR = {
     statusReadyPickup:"Ready for pickup", statusReadyBeach:"On the way to the beach",
     statusCompleted:"Delivered", awaitingPayment:"Awaiting payment confirmation",
     vendorOnline:"Vendor online", vendorOffline:"Vendor offline",
-    remove:"Remove", nameRequired:"Enter your name to continue",
+    remove:"Remove", nameRequired:"Enter your name to continue", phoneRequired:"Enter your phone number to continue",
     beachZoneRequired:"Choose a beach zone",
     findOrder:"Already have a code? Look it up", searchPlaceholder:"e.g. OK4X9Z1", search:"Search",
     orderNotFound:"Order not found", configWarning:"⚠️ App not connected to Airtable yet. Fill in AIRTABLE_BASE_ID and AIRTABLE_TOKEN at the top of the file.",
@@ -330,6 +330,9 @@ async function refreshMyOrders(){
 setInterval(async ()=>{
   await refreshVendorStatus();
   if(state.tab === 'track'){ await refreshMyOrders(); }
+  const active = document.activeElement;
+  const isTyping = active && (active.tagName==='INPUT' || active.tagName==='TEXTAREA');
+  if(isTyping) return; // não interrompas quem está a escrever (nome/telemóvel/notas/etc.)
   render();
 }, 6000);
 
@@ -637,7 +640,7 @@ function renderCartDrawer(){
           ${BEACH_ZONES.map(z=>`<option value="${z}" ${state.beachZone===z?'selected':''}>${z}</option>`).join('')}
         </select></div>` : ''}
       <div class="field"><label>${t('yourName')}</label><input id="nameInput" value="${state.checkoutName}"></div>
-      <div class="field"><label>${t('yourPhone')}</label><input id="phoneInput" value="${state.checkoutPhone}"></div>
+      <div class="field"><label>${t('yourPhone')}</label><input id="phoneInput" type="tel" inputmode="tel" required value="${state.checkoutPhone}"></div>
       <div class="field"><label>${t('notes')}</label><textarea id="notesInput" rows="2">${state.checkoutNotes}</textarea></div>
       <div class="checkbox-row" id="invoiceToggle">
         <input type="checkbox" id="invoiceCheckbox" ${state.wantsInvoice?'checked':''}>
@@ -662,6 +665,7 @@ function renderCartDrawer(){
   const goBtn = ov.querySelector('#goToPaymentBtn');
   if(goBtn) goBtn.onclick = ()=>{
     if(!state.checkoutName.trim()){ toast(t('nameRequired')); return; }
+    if(!state.checkoutPhone.trim()){ toast(t('phoneRequired')); return; }
     if(state.fulfil==='beach' && !state.beachZone){ toast(t('beachZoneRequired')); return; }
     if(state.wantsInvoice && state.taxId.trim().length!==9){ toast(t('taxIdRequired')); return; }
     state.checkoutStage = 'payment'; render();
