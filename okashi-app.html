@@ -21,7 +21,8 @@
   .brand{ display:flex; align-items:center; gap:10px; }
   .brand-badge{ width:46px;height:46px;flex-shrink:0;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 2px 0 rgba(74,25,66,.25)); }
   .brand-text .name{ font-weight:800; font-size:1.28rem; line-height:1.05; }
-  .brand-text .tag{ font-size:.72rem; color:rgba(74,25,66,.75); font-weight:700; }
+  .brand-text .tag{ font-size:.72rem; color:rgba(74,25,66,.75); font-weight:700; letter-spacing:.4px; }
+  .brand-text .brand-links{ font-size:.62rem; color:rgba(74,25,66,.55); font-weight:600; margin-top:1px; }
   .header-right{ display:flex; align-items:center; gap:8px; }
   .lang-toggle{ display:flex; background:rgba(255,255,255,.55); border-radius:999px; padding:3px; border:1.5px solid rgba(74,25,66,.25); }
   .lang-toggle button{ border:none;background:transparent; font-family:'Nunito';font-weight:800;font-size:.72rem; padding:5px 9px;border-radius:999px;color:var(--ink-soft);cursor:pointer; }
@@ -147,7 +148,7 @@ const CONFIG_OK = !AIRTABLE_BASE_ID.startsWith('COLOCA_AQUI') && !AIRTABLE_TOKEN
 
 const STR = {
   pt: {
-    appName:"Okashi Açaí", tagline:"O teu açaí, à tua maneira",
+    appName:"OKASHI AÇAÍ", tagline:"THE LIVE ACT OF AÇAÍ",
     tabMenu:"Menu", tabTrack:"O Meu Pedido",
     bowls:"Bowls", buildYourOwn:"Faz o Teu Açaí",
     unlimitedToppings:"+ Toppings ilimitados", availableUntil:"*Disponível até às 15h",
@@ -183,7 +184,7 @@ const STR = {
     viewMyOrder:"Ver o meu pedido",
   },
   en: {
-    appName:"Okashi Açaí", tagline:"Your açaí, your way",
+    appName:"OKASHI AÇAÍ", tagline:"THE LIVE ACT OF AÇAÍ",
     tabMenu:"Menu", tabTrack:"My Order",
     bowls:"Bowls", buildYourOwn:"Build Your Açaí",
     unlimitedToppings:"+ Unlimited toppings", availableUntil:"*Available until 3pm",
@@ -535,7 +536,7 @@ function render(){
     <header>
       <div class="brand">
         <div class="brand-badge">${giraffeSvg(26)}</div>
-        <div class="brand-text"><div class="name">${t('appName')}</div><div class="tag">${t('tagline')}</div></div>
+        <div class="brand-text"><div class="name">${t('appName')}</div><div class="tag">${t('tagline')}</div><div class="brand-links">@okashiacai · www.okashiacai.com</div></div>
       </div>
       <div class="header-right">
         <div class="vendor-pill"><span class="dot ${state.vendorOnline?'on':''}"></span>${state.vendorOnline?t('vendorOnline'):t('vendorOffline')}</div>
