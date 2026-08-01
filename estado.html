@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Okashi — Estado dos Pedidos</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f8f8f8;min-height:100vh}
+header{background:#1a1a2e;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+header h1{font-size:17px;font-weight:800}
+.live{font-size:11px;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;background:#4eff70;animation:p 1.5s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+.status{padding:6px 14px;font-size:12px;background:#fff;border-bottom:1px solid #eee}
+.status.ok{color:#007a35}.status.err{color:#b00020;background:#fff2f2}
+
+/* FILTROS */
+.filters{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid #eee;overflow-x:auto}
+.fbtn{padding:7px 14px;border-radius:20px;border:1.5px solid #ddd;background:none;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;color:#666}
+.fbtn.on{background:#1a1a2e;border-color:#1a1a2e;color:#fff}
+.fbtn.on-novo{background:#e03030;border-color:#e03030;color:#fff}
+.fbtn.on-pronto{background:#007a35;border-color:#007a35;color:#fff}
+
+/* CONTADOR */
+.counters{display:flex;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #eee}
+.counter{flex:1;text-align:center;border-radius:10px;padding:8px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.counter-num{font-size:22px;font-weight:900;display:block;margin-bottom:2px}
+.c-espera{background:#fff3f3;color:#e03030}
+.c-pronto{background:#f0fff4;color:#007a35}
+.c-total{background:#f0f0ff;color:#1a1a2e}
+
+/* GRID */
+.grid{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+
+/* CARD */
+.card{background:#fff;border-radius:12px;border:2px solid;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.card.novo{border-color:#e03030}
+.card.pronto{border-color:#007a35}
+.card.pronto{opacity:.75}
+
+.card-head{padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+.card-head.novo{background:#ffe8e8}
+.card-head.pronto{background:#e8fff0}
+
+.head-left{display:flex;align-items:center;gap:8px}
+.num{font-size:20px;font-weight:900;color:#111}
+.praia-tag{background:#0066cc;color:#fff;font-size:11px;font-weight:800;padding:3px 8px;border-radius:8px}
+
+.estado-badge{font-size:12px;font-weight:800;padding:5px 12px;border-radius:20px}
+.badge-novo{background:#e03030;color:#fff}
+.badge-pronto{background:#007a35;color:#fff}
+
+/* ENTREGA - destaque */
+.entrega{padding:8px 12px;background:#e8f4ff;border-top:1px solid #c8e0ff;font-size:14px;font-weight:800;color:#003a7a}
+
+/* ITENS */
+.itens{padding:8px 12px;border-top:1px solid #f0f0f0}
+.acai-block{background:#f8f8f8;border-radius:7px;padding:7px 10px;margin-bottom:5px;border-left:3px solid #e03030}
+.card.pronto .acai-block{border-left-color:#007a35}
+.acai-block:last-child{margin-bottom:0}
+.acai-main{font-size:14px;font-weight:900;color:#111}
+.acai-top{font-size:12px;font-weight:600;color:#555}
+.acai-top::before{content:"· ";color:#aaa}
+
+/* TEMPOS */
+.tempos{padding:6px 12px;border-top:1px solid #f0f0f0;display:flex;gap:12px;flex-wrap:wrap}
+.tempo{font-size:12px;color:#888}
+.tempo b{font-weight:800;color:#444}
+.tempo.alerta b{color:#e03030}
+
+/* NOTAS */
+.nota{padding:6px 12px;border-top:1px solid #f0f0f0;background:#fffbf0;font-size:12px;color:#735000;font-weight:600}
+
+.empty{text-align:center;padding:50px 20px;color:#bbb;font-size:15px;font-weight:600}
+.btn-refresh{background:none;border:1.5px solid rgba(255,255,255,.4);border-radius:20px;color:#fff;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍇 Okashi — Estado dos Pedidos</h1>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="btn-refresh" onclick="fetchOrders()">🔄</button>
+    <div class="live"><div class="dot"></div><span id="live">A ligar...</span></div>
+  </div>
+</header>
+
+<div id="status" class="status ok">A verificar ligação...</div>
+
+<div class="counters">
+  <div class="counter c-espera"><span class="counter-num" id="c-novo">0</span>À espera</div>
+  <div class="counter c-pronto"><span class="counter-num" id="c-pronto">0</span>Prontos</div>
+  <div class="counter c-total"><span class="counter-num" id="c-total">0</span>Total hoje</div>
+</div>
+
+<div class="filters">
+  <button class="fbtn on" id="f-todos" onclick="setFilter('todos')">Todos</button>
+  <button class="fbtn" id="f-novo" onclick="setFilter('novo')">🔴 À espera</button>
+  <button class="fbtn" id="f-pronto" onclick="setFilter('pronto')">✅ Prontos</button>
+  <button class="fbtn" id="f-praia" onclick="setFilter('praia')">🏖️ Praia</button>
+</div>
+
+<div class="grid" id="grid"><div class="empty">A carregar...</div></div>
+
+<script>
+const TOKEN='patxsjHccHr0MqzD4.3c2af2923a6de35efe015937845b6ab4b9d59d81c561c18cb9cc7eb472cdc0bd';
+const BASE='app1DlNHDekbP5asp';
+const TABLE='tblQU3C1h4D8mxuqA';
+const F_FIM='fld4K0OjUMi1s4N63';
+const F_PRAIA='fldTYaDYtS1PjIYjj';
+const F_ONDE='fldwo12QNCHgPmd1R';
+const F_TEL='fldWju4PvnQaAGeps';
+
+let orders=[], filter='todos';
+let inicioDia=null; // Mostra pedidos de hoje por defeito
+
+function estado(r){const e=r.fields.Estado;if(!e)return'';if(typeof e==='string')return e.trim();return(e.name||'').trim();}
+function hr(v){if(!v)return'';try{return new Date(v).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});}catch(e){return'';}}
+function mins(de,ate){if(!de||!ate)return null;return Math.round((new Date(ate)-new Date(de))/60000);}
+
+function setFilter(f){
+  filter=f;
+  ['todos','novo','pronto','praia'].forEach(x=>{
+    const el=document.getElementById('f-'+x);
+    el.className='fbtn'+(f===x?' on'+(x==='novo'?' on-novo':x==='pronto'?' on-pronto':''):'');
+  });
+  render();
+}
+
+function parseItens(txt){
+  if(!txt)return[];
+  const linhas=txt.split('\n').filter(x=>x.trim());
+  const blocos=[];let atual=null;
+  for(const l of linhas){
+    const linha=l.trim();
+    if(!linha.startsWith('+')){
+      if(atual)blocos.push(atual);
+      atual={principal:linha.replace(/\s*\(\+€[\d.]+\)\s*$/,'').trim(),toppings:[]};
+    }else{
+      const top=linha.replace(/^\+\s*/,'').replace(/\s*\(\+€[\d.]+\)\s*$/,'').trim();
+      if(atual)atual.toppings.push(top);
+    }
+  }
+  if(atual)blocos.push(atual);
+  return blocos;
+}
+
+function hoje(){return new Date().toISOString().slice(0,10);}
+
+function render(){
+  // Filtrar apenas pedidos de hoje
+  const todosHoje=orders.filter(o=>(o.fields.Hora||'').slice(0,10)===hoje());
+
+  const novos=todosHoje.filter(o=>estado(o)==='Novo');
+  const prontos=todosHoje.filter(o=>estado(o)==='Pronto');
+
+  document.getElementById('c-novo').textContent=novos.length;
+  document.getElementById('c-pronto').textContent=prontos.length;
+  document.getElementById('c-total').textContent=todosHoje.length;
+
+  let lista=todosHoje.sort((a,b)=>{
+    // Novos primeiro, por ordem de chegada
+    const ea=estado(a)==='Novo'?0:1;
+    const eb=estado(b)==='Novo'?0:1;
+    if(ea!==eb)return ea-eb;
+    return new Date(a.fields.Hora||0)-new Date(b.fields.Hora||0);
+  });
+
+  if(filter==='novo')lista=lista.filter(o=>estado(o)==='Novo');
+  else if(filter==='pronto')lista=lista.filter(o=>estado(o)==='Pronto');
+  else if(filter==='praia')lista=lista.filter(o=>o.fields[F_PRAIA]===true);
+
+  const grid=document.getElementById('grid');
+  if(!lista.length){
+    grid.innerHTML='<div class="empty">'+
+      (filter==='praia'?'🏖️ Sem pedidos da praia':
+       filter==='novo'?'Sem pedidos à espera ✅':
+       filter==='pronto'?'Sem pedidos prontos ainda':'Sem pedidos hoje')+
+    '</div>';
+    return;
+  }
+
+  const agora=new Date().toISOString();
+  grid.innerHTML=lista.map(o=>{
+    const f=o.fields;
+    const done=estado(o)==='Pronto';
+    const isPraia=f[F_PRAIA]===true;
+    const chegada=f.Hora;
+    const fim=f[F_FIM];
+    const tempoTotal=fim&&chegada?mins(chegada,fim):null;
+    const tempoEspera=!done&&chegada?mins(chegada,agora):null;
+    const onde=f[F_ONDE]||'';
+    const tel=f[F_TEL]||'';
+    const blocos=parseItens(f.Itens);
+
+    // Entrega
+    let entregaHtml='';
+    if(onde||tel){
+      const parts=[];
+      if(onde)parts.push('📍 '+onde);
+      if(tel)parts.push('📱 '+tel);
+      entregaHtml=`<div class="entrega">${parts.join('  ·  ')}</div>`;
+    }
+
+    // Tempos
+    let temposHtml='';
+    if(chegada)temposHtml+=`<div class="tempo">📥 Chegou: <b>${hr(chegada)}</b></div>`;
+    if(fim)temposHtml+=`<div class="tempo">✅ Pronto: <b>${hr(fim)}</b></div>`;
+    if(tempoTotal!==null)temposHtml+=`<div class="tempo">⏱️ Tempo: <b>${tempoTotal} min</b></div>`;
+    else if(tempoEspera!==null)temposHtml+=`<div class="tempo ${tempoEspera>10?'alerta':''}">⏳ À espera: <b>${tempoEspera} min</b></div>`;
+
+    const blocosHtml=blocos.map(b=>`
+      <div class="acai-block">
+        <div class="acai-main">${b.principal}</div>
+        ${b.toppings.map(t=>`<div class="acai-top">${t}</div>`).join('')}
+      </div>`).join('');
+
+    return`<div class="card ${done?'pronto':'novo'}">
+      <div class="card-head ${done?'pronto':'novo'}">
+        <div class="head-left">
+          <span class="num">${f.NumeroPedido||'—'}</span>
+          ${isPraia?'<span class="praia-tag">🏖️ PRAIA</span>':''}
+        </div>
+        <span class="estado-badge ${done?'badge-pronto':'badge-novo'}">${done?'✅ Pronto':'🔴 À espera'}</span>
+      </div>
+      ${entregaHtml}
+      <div class="itens">${blocosHtml}</div>
+      ${temposHtml?`<div class="tempos">${temposHtml}</div>`:''}
+      ${f.Notas?`<div class="nota">📝 ${f.Notas}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function fetchOrders(){
+  try{
+    document.getElementById('live').textContent='A atualizar...';
+    const url=`https://api.airtable.com/v0/${BASE}/${TABLE}?sort%5B0%5D%5Bfield%5D=Hora&sort%5B0%5D%5Bdirection%5D=desc&maxRecords=100`;
+    const r=await fetch(url,{headers:{Authorization:'Bearer '+TOKEN}});
+    if(!r.ok){document.getElementById('status').textContent='Erro de ligação: '+r.status;document.getElementById('status').className='status err';return;}
+    const data=await r.json();
+    orders=data.records||[];
+    document.getElementById('live').textContent=new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const hoje_str=hoje();
+    const hoje_count=orders.filter(o=>(o.fields.Hora||'').slice(0,10)===hoje_str).length;
+    document.getElementById('status').textContent='✅ Ligado. '+hoje_count+' pedidos hoje.';
+    document.getElementById('status').className='status ok';
+    render();
+  }catch(e){
+    document.getElementById('status').textContent='Sem ligação: '+e.message;
+    document.getElementById('status').className='status err';
+    document.getElementById('live').textContent='Sem ligação';
+  }
+}
+
+fetchOrders();
+setInterval(fetchOrders,10000);
+</script>
+</body>
+</html>
