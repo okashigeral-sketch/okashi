@@ -130,6 +130,7 @@ body{margin:0;font-family:system-ui,-apple-system,'Nunito',sans-serif;background
 #panel-gerir .badge{ font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:999px; }
 #panel-gerir .badge.paid{ background:var(--success-bg);color:var(--success); }
 #panel-gerir .badge.unpaid{ background:var(--warn-bg);color:var(--warn-ink); }
+#panel-gerir .handoff-label{ font-weight:800; font-size:.8rem; margin:6px 0 6px; }
 #panel-gerir .badge.fulfil{ background:#eee0f0;color:var(--ink-soft); }
 #panel-gerir .badge.status{ background:#f1e3ea;color:var(--ink); }
 #panel-gerir .items{ font-size:.82rem;color:var(--ink-soft);line-height:1.5;margin-bottom:8px; }
@@ -144,9 +145,11 @@ body{margin:0;font-family:system-ui,-apple-system,'Nunito',sans-serif;background
 #panel-gerir .empty-note{ text-align:center;padding:40px 10px;color:var(--ink-soft);font-weight:700; }
 #panel-gerir .total{ font-family:'Baloo 2';font-weight:700;font-size:1.05rem;margin-bottom:8px; }
 #panel-gerir .unpaid-alert{
-  background:#e03030; color:#fff; font-weight:800; font-size:.85rem;
-  padding:9px 12px; border-radius:12px; margin-bottom:8px; text-align:center;
+  background:#e03030; color:#fff; font-weight:900; font-size:1.05rem;
+  padding:12px 12px; border-radius:12px; margin-bottom:10px; text-align:center;
+  letter-spacing:.3px;
 }
+#panel-gerir .unpaid-alert.big{ font-size:1.15rem; animation:pulseAlert 1.4s infinite; }
 #panel-gerir .pay-compare{
   border-radius:12px; padding:10px 12px; margin-bottom:8px; font-size:.82rem; line-height:1.6;
 }
@@ -157,6 +160,20 @@ body{margin:0;font-family:system-ui,-apple-system,'Nunito',sans-serif;background
   background:#e03030; color:#fff; font-weight:800; font-size:.85rem;
   padding:12px 14px; border-radius:14px; margin-bottom:14px; text-align:center;
   cursor:pointer; animation:pulseAlert 1s infinite;
+}
+#panel-gerir .decision-banner{
+  background:#0066cc; color:#fff; border-radius:14px; padding:12px 14px; margin-bottom:12px;
+  animation:pulseAlert 1.2s infinite;
+}
+#panel-gerir .decision-title{ font-weight:900; font-size:.95rem; margin-bottom:2px; }
+#panel-gerir .decision-sub{ font-size:.78rem; opacity:.9; margin-bottom:10px; }
+#panel-gerir .decision-actions{ display:flex; gap:8px; }
+#panel-gerir .decision-actions button{ flex:1; padding:10px; border:none; border-radius:10px; font-weight:800; font-size:.85rem; cursor:pointer; }
+#panel-gerir .btn-accept{ background:#fff; color:#0066cc; }
+#panel-gerir .btn-reject{ background:rgba(255,255,255,.2); color:#fff; }
+#panel-gerir .ready-banner{
+  background:#2f8f5b; color:#fff; font-weight:800; font-size:.85rem;
+  padding:11px 14px; border-radius:14px; margin-bottom:10px; text-align:center; cursor:pointer;
 }
 @keyframes pulseAlert{ 0%,100%{opacity:1;} 50%{opacity:.75;} }
 .tab-badge{ display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;
@@ -280,13 +297,6 @@ body{margin:0;font-family:system-ui,-apple-system,'Nunito',sans-serif;background
   </div>
 </div>
 
-<div class="pronto" id="pronto">
-  <div class="pronto-em">✅</div>
-  <div class="pronto-t">Pedido pronto!</div>
-  <div class="pronto-s" id="prontosub">O teu pedido está pronto!</div>
-  <button class="pronto-ok" onclick="document.getElementById('pronto').classList.remove('show')">OK 🍇</button>
-</div>
-
 <div class="modal" id="mbowl" onclick="closeM('mbowl',event)">
   <div class="mbox" onclick="event.stopPropagation()">
     <h2 id="bowlt">Bowl</h2>
@@ -365,12 +375,14 @@ const FP = 'fldTYaDYtS1PjIYjj', FO = 'fldwo12QNCHgPmd1R', FT = 'fldWju4PvnQaAGep
 
 const CONFIG_OK = !AIRTABLE_BASE_ID.startsWith('COLOCA_AQUI') && !AIRTABLE_TOKEN.startsWith('COLOCA_AQUI');
 
-document.querySelectorAll('.tabbtn').forEach(b=> b.onclick = ()=>{
+function switchTab(tab){
   document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');
-  document.getElementById('panel-'+b.dataset.tab).classList.add('active');
-});
+  document.querySelector('.tabbtn[data-tab="'+tab+'"]').classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+document.querySelectorAll('.tabbtn').forEach(b=> b.onclick = ()=> switchTab(b.dataset.tab));
+if(location.hash === '#estado') switchTab('gerir');
 
 let items=[],bowlData={},praia=false,desconto='none',pagamento='';
 let pedidoN=parseInt(localStorage.getItem('ok_v_n')||'1');
@@ -519,7 +531,7 @@ async function enviar(){
     return i.price>0?`${nm} (+€${i.price.toFixed(2)})`:nm;
   }).join('\n');
   const descLabel=desconto==='10pct'?'Desconto: -10%':desconto==='bar'?'Desconto: -€1 Bar':'';
-  const notaFinal=[notas,pager?'📟 Pager #'+pager:'',descLabel,pagamento?'Pagamento: '+pagamento:'',praia?'🏖️ PRAIA':''].filter(Boolean).join(' | ');
+  const notaFinal=[notas,pager?'📟 Pager #'+pager:'',descLabel,pagamento?'Pagamento: '+pagamento:'',praia?'🏖️ PRAIA':'','Aceite'].filter(Boolean).join(' | ');
   try{
     const fields={NumeroPedido:'Pedido #'+pedidoN,Itens:itens,Total:total,Estado:'Novo',Notas:notaFinal,Hora:new Date().toISOString(),[FP]:praia};
     if(praia&&nomeCliente){fields[FO]='Praia';fields[FT]=nomeCliente;}
@@ -542,37 +554,26 @@ async function enviar(){
   btn.disabled=false;btn.textContent='Enviar ✓';
 }
 
-async function verificarProntos(){
-  const pendentes=meusPedidos.filter(p=>!prontosMostrados.includes(p.id));
-  if(!pendentes.length)return;
-  try{
-    const ids=pendentes.map(p=>`records[]=${p.id}`).join('&');
-    const r=await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${ORDERS_TABLE}?${ids}`,{headers:{Authorization:'Bearer '+AIRTABLE_TOKEN}});
-    if(!r.ok)return;
-    const data=await r.json();
-    const prontos=(data.records||[]).filter(rec=>{const e=rec.fields.Estado;return(typeof e==='string'?e:(e?.name||''))==='Pronto';});
-    if(prontos.length){
-      prontos.forEach(p=>prontosMostrados.push(p.id));
-      localStorage.setItem('ok_v_pr',JSON.stringify(prontosMostrados));
-      const info=meusPedidos.find(p=>p.id===prontos[0].id);
-      document.getElementById('prontosub').textContent=(info?info.num:'O pedido')+' está pronto!';
-      document.getElementById('pronto').classList.add('show');
-      try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[880,1047,1319,1047,1319].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sine';o.frequency.value=f;const t=ctx.currentTime+i*.2;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.5,t+.05);g.gain.linearRampToValueAtTime(0,t+.18);o.start(t);o.stop(t+.2);});}catch(e){}
-    }
-  }catch(e){}
-}
-
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500);}
 
 fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${ORDERS_TABLE}?maxRecords=1`,{headers:{Authorization:'Bearer '+AIRTABLE_TOKEN}})
   .then(r=>document.getElementById('hst').textContent=r.ok?'✅ Ligado':'❌ Erro')
   .catch(()=>document.getElementById('hst').textContent='❌ Sem ligação');
 
-setInterval(verificarProntos,10000);
 renderNovo();
 
-const STATUS_LABELS_PT = {received:'Recebido', preparing:'Em preparação', ready:'Pronto', completed:'Entregue'};
+const STATUS_LABELS_PT = {received:'Pedido feito', preparing:'Em preparação', ready:'Pronto', delivering:'Em entrega', completed:'Entregue'};
 const STATUS_FROM_AIRTABLE = {Novo:'received', 'Em preparacao':'preparing', Pronto:'ready'};
+function isAccepted(notas){ return /\bAceite\b/i.test(notas||''); }
+function isRejected(notas){ return /\bRecusado\b/i.test(notas||''); }
+function isEmEntrega(notas){ return /\bEm Entrega\b/i.test(notas||''); }
+function computeStatus(notas, estado){
+  if(isDelivered(notas)) return 'completed';
+  if(isEmEntrega(notas)) return 'delivering';
+  if(estado==='Pronto') return 'ready';
+  if(isAccepted(notas)) return 'preparing';
+  return 'received';
+}
 function estadoTexto(f){ const e=f['Estado']; if(!e) return ''; return typeof e==='string'?e:(e.name||''); }
 function isPaid(notas){ return /Pagamento:/i.test(notas||''); }
 function isDelivered(notas){ return /\bEntregue\b/i.test(notas||''); }
@@ -610,12 +611,19 @@ function decodeOrder(record){
   const notas = f['Notas'] || '';
   const paid = isPaid(notas);
   const estado = estadoTexto(f);
-  const status = isDelivered(notas) ? 'completed' : (STATUS_FROM_AIRTABLE[estado] || 'received');
+  const status = computeStatus(notas, estado);
+  const numeroPedido = f['NumeroPedido'] || '';
+  const isQrOrder = numeroPedido.startsWith('QR');
+  const accepted = isAccepted(notas);
+  const rejected = isRejected(notas);
   return {
     recordId: record.id,
-    id: f['NumeroPedido'] || '',
+    id: numeroPedido,
+    isQrOrder,
     createdAt: f['Hora'] ? Date.parse(f['Hora']) : Date.now(),
     status,
+    accepted, rejected,
+    needsDecision: isQrOrder && !accepted && !rejected,
     paid,
     paidOnline: paid && /Online \(SumUp\)/i.test(notas),
     paidAmount: paidOnlineAmount(notas),
@@ -634,7 +642,7 @@ function eHoje(createdAt){
   return new Date(createdAt).toLocaleDateString('pt-PT',{timeZone:'Europe/Lisbon'}) === hoje;
 }
 function statusLabel(o){
-  if(o.status==='received') return o.paid ? 'Recebido' : 'A aguardar pagamento';
+  if(o.status==='received') return o.paid ? STATUS_LABELS_PT.received : 'A aguardar pagamento';
   return STATUS_LABELS_PT[o.status];
 }
 function fmt(n){ return '€' + n.toFixed(2).replace('.', ','); }
@@ -655,7 +663,8 @@ async function refreshVendorStatus(){
 
 let knownOrderIds = new Set();
 let firstOrdersLoad = true;
-let newOrderAlertCount = 0;
+let knownStatusById = {};   // recordId -> último status conhecido (para detetar "acabou de ficar pronto")
+let readyAlerts = [];       // [{recordId, id}] — pedidos próprios que acabaram de ficar prontos, por confirmar
 
 function beepAlerta(){
   try{
@@ -670,7 +679,7 @@ function beepAlerta(){
   }catch(e){}
 }
 
-function dismissNewOrderAlert(){ newOrderAlertCount = 0; renderGerir(); }
+function dismissReadyAlert(recordId){ readyAlerts = readyAlerts.filter(a=>a.recordId!==recordId); renderGerir(); }
 
 async function refreshOrders(){
   if(!CONFIG_OK) return;
@@ -679,14 +688,32 @@ async function refreshOrders(){
     const data = await airtableFetch(ORDERS_TABLE, 'GET', '?' + params.toString());
     const novos = (data.records || []).map(decodeOrder);
     if(!firstOrdersLoad){
-      // Alerta só para pedidos novos vindos da app do cliente (QR) — os próprios já sabe que fez.
-      const chegaram = novos.filter(o => o.id.startsWith('QR') && !knownOrderIds.has(o.recordId));
-      if(chegaram.length){ newOrderAlertCount += chegaram.length; beepAlerta(); }
+      // Beep para novos pedidos QR que precisam de decisão (Aceite/Não aceite).
+      const chegaram = novos.filter(o => o.needsDecision && !knownOrderIds.has(o.recordId));
+      if(chegaram.length) beepAlerta();
+      // Alerta leve (dispensável) quando um pedido próprio ou já aceite acaba de ficar "Pronto".
+      novos.forEach(o=>{
+        const antes = knownStatusById[o.recordId];
+        if(antes && antes!=='ready' && o.status==='ready'){
+          readyAlerts.push({recordId:o.recordId, id:o.id});
+          beepAlerta();
+        }
+      });
     }
-    novos.forEach(o=>knownOrderIds.add(o.recordId));
+    novos.forEach(o=>{ knownOrderIds.add(o.recordId); knownStatusById[o.recordId]=o.status; });
     firstOrdersLoad = false;
     orders = novos;
   }catch(e){ console.error('orders fetch failed', e); }
+}
+
+async function decideOrder(recordId, decisao){ // decisao: 'Aceite' | 'Recusado'
+  const order = orders.find(o=>o.recordId===recordId);
+  if(!order) return;
+  const novaNotas = [order.notes, decisao].filter(Boolean).join(' | ');
+  try{
+    await airtableFetch(ORDERS_TABLE, 'PATCH', '/' + recordId, { fields:{ Notas: novaNotas } });
+    await refreshOrders(); renderGerir();
+  }catch(e){ console.error(e); alert('Erro ao registar a decisão.'); }
 }
 
 async function toggleVendorOnline(){
@@ -722,9 +749,33 @@ async function confirmPayment(recordId, metodo){
   }catch(e){ console.error(e); alert('Erro ao confirmar pagamento.'); }
 }
 
+// Usado no momento da entrega: regista o método de pagamento e marca "Entregue" numa só ação,
+// porque o cliente só paga quando recebe o pedido.
+async function confirmPaymentAndDeliver(recordId, metodo){
+  const order = orders.find(o=>o.recordId===recordId);
+  if(!order) return;
+  const novaNotas = [order.notes, 'Pagamento: ' + metodo, 'Entregue'].filter(Boolean).join(' | ');
+  try{
+    await airtableFetch(ORDERS_TABLE, 'PATCH', '/' + recordId, { fields:{ Notas: novaNotas } });
+    await refreshOrders(); renderGerir();
+  }catch(e){ console.error(e); alert('Erro ao confirmar pagamento e entrega.'); }
+}
+
+async function markEmEntrega(recordId){
+  const order = orders.find(o=>o.recordId===recordId);
+  if(!order || order.status!=='ready') return;
+  const novaNotas = [order.notes, 'Em Entrega'].filter(Boolean).join(' | ');
+  try{
+    await airtableFetch(ORDERS_TABLE, 'PATCH', '/' + recordId, { fields:{ Notas: novaNotas } });
+    await refreshOrders(); renderGerir();
+  }catch(e){ console.error(e); alert('Erro ao marcar em entrega.'); }
+}
+
 async function markDelivered(recordId){
   const order = orders.find(o=>o.recordId===recordId);
-  if(!order || order.status!=='ready' || !order.paid) return;
+  if(!order || !order.paid) return;
+  if(order.fulfillment==='beach' && order.status!=='delivering') return;
+  if(order.fulfillment==='pickup' && order.status!=='ready') return;
   const novaNotas = [order.notes, 'Entregue'].filter(Boolean).join(' | ');
   try{
     await airtableFetch(ORDERS_TABLE, 'PATCH', '/' + recordId, { fields:{ Notas: novaNotas } });
@@ -736,22 +787,36 @@ setInterval(async ()=>{ await refreshVendorStatus(); await refreshOrders(); rend
 
 function renderGerir(){
   const app = document.getElementById('app');
-  const badgeEl = document.getElementById('tabBadge');
-  if(badgeEl) badgeEl.innerHTML = newOrderAlertCount>0 ? `<span class="tab-badge">${newOrderAlertCount}</span>` : '';
-
   const meusIds = new Set(meusPedidos.map(p=>p.id));
   // Mostra os pedidos feitos neste telemóvel + TODOS os pedidos vindos da app do cliente (QR),
   // porque é o vendedor quem entrega na praia. Não mostra os da caixa principal.
-  const filtered = orders.filter(o => (meusIds.has(o.recordId) || o.id.startsWith('QR')) && eHoje(o.createdAt) && (filter==='active' ? o.status!=='completed' : o.status==='completed'));
+  const emEscopo = orders.filter(o => (meusIds.has(o.recordId) || o.isQrOrder) && eHoje(o.createdAt));
+  const pendentesDecisao = emEscopo.filter(o => o.needsDecision);
+
+  const badgeEl = document.getElementById('tabBadge');
+  const badgeCount = pendentesDecisao.length + readyAlerts.length;
+  if(badgeEl) badgeEl.innerHTML = badgeCount>0 ? `<span class="tab-badge">${badgeCount}</span>` : '';
+
+  const filtered = emEscopo.filter(o => !o.needsDecision && (filter==='active' ? o.status!=='completed' : o.status==='completed'));
 
   app.innerHTML = `
     <header><h1>Estado dos meus pedidos</h1></header>
-    ${newOrderAlertCount>0 ? `
-      <div class="new-order-banner" onclick="dismissNewOrderAlert()">
-        🔔 ${newOrderAlertCount} novo${newOrderAlertCount>1?'s':''} pedido${newOrderAlertCount>1?'s':''} da app do cliente! <span style="text-decoration:underline">toca para fechar</span>
-      </div>
-    ` : ''}
     ${!CONFIG_OK ? `<div class="config-banner">⚠️ App ainda não ligada ao Airtable.</div>` : ''}
+    ${pendentesDecisao.map(o=>`
+      <div class="decision-banner">
+        <div class="decision-title">🔔 NOVO PEDIDO PRAIA — ${o.id}</div>
+        <div class="decision-sub">${o.fulfillment==='beach' ? 'Entrega: Praia — '+(o.beachZone||'?') : 'Entrega: Balcão'} · ${fmt(o.total)}</div>
+        <div class="decision-actions">
+          <button class="btn-accept" data-decide="${o.recordId}|Aceite">✅ Aceite</button>
+          <button class="btn-reject" data-decide="${o.recordId}|Recusado">❌ Não aceite</button>
+        </div>
+      </div>
+    `).join('')}
+    ${readyAlerts.map(a=>`
+      <div class="ready-banner" data-dismiss-ready="${a.recordId}">
+        ✅ ${a.id} está pronto! <span style="text-decoration:underline">toca para fechar</span> — vê detalhes em baixo.
+      </div>
+    `).join('')}
     <div class="status-card">
       <div><div class="lab">${vendorOnline?'Online — entrega na praia ativa':'Offline — só recolha no balcão'}</div><div class="sub">Controla se a entrega na praia aparece aos clientes</div></div>
       <label class="switch"><input type="checkbox" id="vendorSwitch" ${vendorOnline?'checked':''}><span class="slider"></span></label>
@@ -764,15 +829,18 @@ function renderGerir(){
   `;
   const listEl = document.getElementById('orderList');
   if(filtered.length===0){
-    listEl.innerHTML = `<div class="empty-note">Ainda não fizeste pedidos hoje neste telemóvel.</div>`;
+    listEl.innerHTML = `<div class="empty-note">Sem pedidos aqui.</div>`;
   } else {
     listEl.innerHTML = filtered.map(o=>{
       const when = new Date(o.createdAt).toLocaleString('pt-PT',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
       const itemsHtml = (o.itemsText||'').split('\n').filter(Boolean).map(l=>{
         return l.startsWith('+') ? '<div style="padding-left:10px;color:#888">'+l+'</div>' : '<div><b>'+l+'</b></div>';
       }).join('');
-      const notasVisiveis = (o.notes||'').split(' | ').filter(p=>!/^Pagamento:/i.test(p) && p.trim()!=='Entregue').join(' | ');
+      const notasVisiveis = (o.notes||'').split(' | ').filter(p=>!/^Pagamento:/i.test(p) && !['Entregue','Em Entrega','Aceite','Recusado'].includes(p.trim())).join(' | ');
       const amountMismatch = o.paidOnline && o.paidAmount!==null && Math.abs(o.paidAmount - o.total) > 0.01;
+      // O momento de entrega é: balcão + Pronto, ou praia + Em Entrega.
+      const atHandoff = (o.fulfillment==='pickup' && o.status==='ready') || (o.fulfillment==='beach' && o.status==='delivering');
+
       let paymentBlock;
       if(o.paidOnline){
         paymentBlock = `<div class="pay-compare ${amountMismatch?'mismatch':'match'}">
@@ -782,16 +850,35 @@ function renderGerir(){
         </div>`;
       } else if(o.paid){
         paymentBlock = `<div class="badge paid">✓ Pago — ${o.paymentMethod||'confirmado'}</div>`;
-      } else {
-        paymentBlock = `<div class="unpaid-alert">🚨 NÃO PAGO — cobra antes de entregar</div>
+      } else if(atHandoff){
+        // Só agora, no momento de entregar, é que se pergunta como o cliente pagou.
+        paymentBlock = `<div class="unpaid-alert big">🚨 NÃO PAGO — cobra ao entregar</div>
+        <div class="handoff-label">Como pagou o cliente?</div>
         <div class="actions">
-          <button class="btn-confirm" data-pay="${o.recordId}|Multibanco">💳 Multibanco</button>
-          <button class="btn-confirm" data-pay="${o.recordId}|Dinheiro">💵 Dinheiro</button>
-          <button class="btn-confirm" data-pay="${o.recordId}|MBWay">📱 MBWay</button>
+          <button class="btn-confirm" data-pay-deliver="${o.recordId}|Multibanco">💳 Multibanco e entregar</button>
+          <button class="btn-confirm" data-pay-deliver="${o.recordId}|Dinheiro">💵 Dinheiro e entregar</button>
+          <button class="btn-confirm" data-pay-deliver="${o.recordId}|MBWay">📱 MBWay e entregar</button>
         </div>`;
+      } else {
+        // Ainda não chegou o momento de entrega, mas continua bem visível que ainda não está pago.
+        paymentBlock = `<div class="unpaid-alert">🚨 NÃO PAGO — a cobrar na entrega</div>`;
+      }
+
+      let deliveryAction = '';
+      if(o.paid){
+        if(o.fulfillment==='beach'){
+          if(o.status==='ready') deliveryAction = `<button class="btn-advance" data-em-entrega="${o.recordId}">🚚 Marcar em entrega</button>`;
+          else if(o.status==='delivering') deliveryAction = `<button class="btn-advance" data-deliver="${o.recordId}">✅ Marcar como entregue</button>`;
+        } else {
+          if(o.status==='ready') deliveryAction = `<button class="btn-advance" data-deliver="${o.recordId}">✅ Marcar como entregue</button>`;
+        }
+      } else if(o.fulfillment==='beach' && o.status==='ready'){
+        // Pode ir a caminho da praia mesmo sem estar pago ainda — paga-se só na entrega.
+        deliveryAction = `<button class="btn-advance" data-em-entrega="${o.recordId}">🚚 Marcar em entrega</button>`;
       }
       return `<div class="order-card ${o.paid?'':'unpaid'}">
         <div class="top"><span class="code">${o.id}</span><span class="when">${when}</span></div>
+        ${o.rejected ? '<div class="unpaid-alert" style="background:#888">❌ Marcaste este pedido como Não aceite</div>' : ''}
         <div class="badge-row">
           <span class="badge fulfil">${o.fulfillment==='beach' ? 'Praia — '+(o.beachZone||'?') : 'Balcão'}</span>
           <span class="badge status">${statusLabel(o)}</span>
@@ -801,17 +888,18 @@ function renderGerir(){
         ${notasVisiveis ? '<div class="notes">"'+notasVisiveis+'"</div>' : ''}
         ${o.paidOnline ? '' : `<div class="total">${fmt(o.total)}</div>`}
         ${paymentBlock}
-        <div class="actions">
-          ${o.paid && o.status==='ready' ? `<button class="btn-advance" data-deliver="${o.recordId}">✅ Marcar como entregue</button>` : ''}
-        </div>
+        <div class="actions">${deliveryAction}</div>
       </div>`;
     }).join('');
   }
 
   document.getElementById('vendorSwitch').onchange = toggleVendorOnline;
   document.querySelectorAll('[data-filter]').forEach(b=> b.onclick = ()=>{ filter=b.dataset.filter; renderGerir(); });
-  document.querySelectorAll('[data-pay]').forEach(b=> b.onclick = ()=>{ const [id,metodo]=b.dataset.pay.split('|'); confirmPayment(id,metodo); });
+  document.querySelectorAll('[data-pay-deliver]').forEach(b=> b.onclick = ()=>{ const [id,metodo]=b.dataset.payDeliver.split('|'); confirmPaymentAndDeliver(id,metodo); });
+  document.querySelectorAll('[data-decide]').forEach(b=> b.onclick = ()=>{ const [id,decisao]=b.dataset.decide.split('|'); decideOrder(id,decisao); });
+  document.querySelectorAll('[data-em-entrega]').forEach(b=> b.onclick = ()=> markEmEntrega(b.dataset.emEntrega));
   document.querySelectorAll('[data-deliver]').forEach(b=> b.onclick = ()=> markDelivered(b.dataset.deliver));
+  document.querySelectorAll('[data-dismiss-ready]').forEach(b=> b.onclick = ()=> dismissReadyAlert(b.dataset.dismissReady));
 }
 
 refreshVendorStatus().then(()=>{ refreshOrders().then(renderGerir); });
