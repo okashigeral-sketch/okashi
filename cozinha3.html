@@ -38,9 +38,9 @@ h1{font-size:17px;font-weight:800;color:#fff}
 .ablock:last-child{margin-bottom:0}
 .amain{font-size:16px;font-weight:900;color:#111;margin-bottom:3px}
 .anum{font-size:11px;font-weight:800;background:#c2006e;color:#fff;border-radius:8px;padding:1px 6px;margin-right:4px;vertical-align:middle}
-.atop{font-size:13px;font-weight:700;color:#333;padding:1px 0}
+.atop{font-size:13px;font-weight:900;color:#333;padding:1px 0}
 .atop::before{content:"· "}
-.atop.extra{font-weight:900;color:#cc8800}
+.atop.extra{font-weight:900;color:#cc8800;font-size:16px}
 .nota{padding:6px 14px;background:#fff8e0;border-left:4px solid #cc8800;font-size:13px;color:#735000;font-weight:600;border-top:1px solid #eee}
 .naopago{background:#e03030;color:#fff;font-size:16px;font-weight:900;text-align:center;padding:8px;letter-spacing:1px}
 .btnReady{width:100%;border:0;background:#007a35;color:#fff;padding:13px;font-size:16px;font-weight:900;cursor:pointer;border-top:1px solid #eee}
@@ -176,7 +176,7 @@ function render(){
     const blocos=parseItens(f.Itens);
     const bhtml=blocos.map(b=>`<div class="ablock">
       <div class="amain">${b.num?`<span class="anum">#${b.num}</span>`:''} ${b.nome}</div>
-      ${b.tops.map(t=>`<div class="atop ${t.toLowerCase().includes('topping extra')||t.toLowerCase().includes('extra')?'extra':''}">${t}</div>`).join('')}
+      ${b.tops.map(t=>`<div class="atop ${/topping extra|extra|nutella|whey|pa[cç]oca|franui/i.test(t)?'extra':''}">${t}</div>`).join('')}
     </div>`).join('');
     const cardCls=['card',done?'done':'',ip?'praia':''].filter(Boolean).join(' ');
     const chCls='ch '+(done?'done':ip?'praia':'novo');
